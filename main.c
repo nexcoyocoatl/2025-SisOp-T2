@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include "memory.c"
-#include "memory_linkedlist.h"
+#include "memory.h"
+// #include "memory_linkedlist.h"
 
 // ler de um .txt:
 // IN(<nome do processo>,<espaco que ocupa>)
@@ -26,31 +26,27 @@ int main(int argc, char *argv[])
     // tamanho da memoria (Deverá ser assumido um tamanho sempre equivalente a uma potência de dois.)
     // nome do arquivo a ser aberto
 
-    FILE *file;
-
-    if (argc == 3)
-    {
-        file = fopen(argv[1], "r");
-    }
-    else
-    {
-        printf("usage: main <parameter>\n");
-        char input[100] = "";
-        printf("Type the name of the file: ");
-        scanf("%s", input);
-        printf("\n");
-        file = fopen(input, "r");
-    }
-
-    if (file == NULL)
-    {
-        printf("File not found.\nExiting program...\n");
-        return 1;
-    }
-
-    struct Memory_block block_list;
-
-    initialize_block_list(&block_list, 2048);
+    // FILE *file;
+    //
+    // if (argc == 3)
+    // {
+    //     file = fopen(argv[1], "r");
+    // }
+    // else
+    // {
+    //     printf("usage: main <parameter>\n");
+    //     char input[100] = "";
+    //     printf("Type the name of the file: ");
+    //     scanf("%s", input);
+    //     printf("\n");
+    //     file = fopen(input, "r");
+    // }
+    //
+    // if (file == NULL)
+    // {
+    //     printf("File not found.\nExiting program...\n");
+    //     return 1;
+    // }
     
     // perguntar politica (circular ou worst fit)
     //int option;
@@ -60,7 +56,19 @@ int main(int argc, char *argv[])
     
 
     //... lê arquivo
+
+    struct Memory_block *block_list;
+
+    initialize_block_list(&block_list, 2048);
+
+    for (size_t i = 0; i < 2048; i++)
+    {
+        printf("%lu,", block_list[i].occupied);
+    }
     
+    printf("\n");
+    
+    free(block_list);
 
     return 0;
 }

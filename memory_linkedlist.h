@@ -1,8 +1,8 @@
-#ifndef _PROGRAM_LINKEDLIST_H_
-#define _PROGRAM_LINKEDLIST_H_
+#ifndef _MEMORY_LINKEDLIST_H_
+#define _MEMORY_LINKEDLIST_H_
 
 #include <stdlib.h>
-#include <memory.c> // TODO: necessário?
+// #include <memory.h> // TODO: necessário?
 
 struct Node
 {

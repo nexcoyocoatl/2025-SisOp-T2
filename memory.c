@@ -1,19 +1,18 @@
-#include <memory.h>
+#include <stdlib.h>
+#include <stdio.h>
+#include "memory.h"
 
-struct Memory_block
+int initialize_block_list(struct Memory_block **block_list, size_t space_to_allocate)
 {
-    char occupied; // ou enum (pra ver se o bloco está vazio)
-    char value; //tamanho de memória
-};
+    *block_list = malloc(sizeof(struct Memory_block) * space_to_allocate);
 
-int initialize_block_list(struct Memory_block *block_list, size_t space_to_allocate)
-{
-    block_list = malloc(sizeof(struct Memory_block) * space_to_allocate);
+    if (*block_list == NULL) { return 0; }
 
-    if (block_list == NULL)
+    for (size_t i = 0; i < space_to_allocate; i++)
     {
-        return 0;
+        (*block_list)[i].occupied = 0;
     }
+    printf("\n");
     
     return 1;
 }
