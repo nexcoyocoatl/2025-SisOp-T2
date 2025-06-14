@@ -1,12 +1,13 @@
 #ifndef _MEMORY_LINKEDLIST_H_
 #define _MEMORY_LINKEDLIST_H_
 
+#include <stdint.h>
 #include <stdlib.h>
 // #include <memory.h> // TODO: necessário?
 
 struct Node
 {
-    int allocated;
+    uint8_t b_allocated;
     size_t pid;
     size_t start_address;
     size_t size;

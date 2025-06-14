@@ -1,4 +1,5 @@
 #include <ctype.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -25,6 +26,7 @@ size_t count_processes_from_file(FILE *p_file, size_t line_count);
 int read_file(FILE *p_file);
 int find_proc_by_name(char *name);
 char *find_proc_by_id(size_t pid);
+void print_memory(BYTE *memory_list, BYTE *b_allocated_blocks, size_t memory_size);
 
 // ler de um .txt:
 // IN(<nome do processo>,<espaco que ocupa>)
@@ -55,7 +57,12 @@ int main(int argc, char *argv[])
     size_t memory_size = 1024; // TODO: MUDAR PARA ESCOLHA DO USUÁRIO
 
     memory_blocks = malloc(sizeof(uint8_t) * memory_size);
-    b_allocated_blocks = malloc(sizeof(uint8_t) * memory_size); 
+    b_allocated_blocks = malloc(sizeof(uint8_t) * memory_size);
+
+    for(size_t i = 0; i < memory_size; i++)
+    {
+        b_allocated_blocks[i] = 0;
+    }
 
     FILE *p_file;
     
@@ -121,7 +128,8 @@ int main(int argc, char *argv[])
     //printf("Qual política de alocação você gostaria de implementar? \n");
     //printf("(1) Circular Fit \n (2) Worst Fit")
     // scanf("%d", &option);
-    
+
+    print_memory(memory_blocks, b_allocated_blocks, memory_size);    
 
     // TODO: será modificado pela lista de bytes acima
     struct Memory_block *block_list;
@@ -333,6 +341,27 @@ char *find_proc_by_id(size_t pid)
     }
 
     return "";
+}
+
+void print_memory(BYTE *memory_list, BYTE *b_allocated_blocks, size_t memory_size)
+{
+    for(size_t i = 0; i < memory_size; i++)
+    {
+        if (i%64 == 0)
+        {
+            printf("\n0x%07zx ", i);
+        }
+
+        if (b_allocated_blocks[i] == 1)
+        {
+            printf("█");
+        }
+        else
+        {
+            printf("░");
+        }        
+    }
+    printf("\n");
 }
 
 // TODO: Possivelmente serão adicionadas na linked list
