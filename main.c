@@ -349,7 +349,7 @@ void print_memory(BYTE *memory_list, BYTE *b_allocated_blocks, size_t memory_siz
     {
         if (i%64 == 0)
         {
-            printf("\n0x%07zx ", i);
+            printf("0x%07zx ", i);
         }
 
         if (b_allocated_blocks[i] == 1)
@@ -359,9 +359,13 @@ void print_memory(BYTE *memory_list, BYTE *b_allocated_blocks, size_t memory_siz
         else
         {
             printf("░");
-        }        
+        }
+
+        if (i%64 == 63)
+        {
+            printf("\n");
+        }
     }
-    printf("\n");
 }
 
 // TODO: Possivelmente serão adicionadas na linked list
