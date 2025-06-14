@@ -26,7 +26,8 @@ size_t count_processes_from_file(FILE *p_file, size_t line_count);
 int read_file(FILE *p_file);
 int find_proc_by_name(char *name);
 char *find_proc_by_id(size_t pid);
-void print_memory(BYTE *memory_list, BYTE *b_allocated_blocks, size_t memory_size);
+void print_memory_blocks(BYTE *b_allocated_blocks, size_t memory_size);
+void print_memory_bytes(BYTE *memory_list, size_t memory_size);
 
 // ler de um .txt:
 // IN(<nome do processo>,<espaco que ocupa>)
@@ -59,9 +60,13 @@ int main(int argc, char *argv[])
     memory_blocks = malloc(sizeof(uint8_t) * memory_size);
     b_allocated_blocks = malloc(sizeof(uint8_t) * memory_size);
 
+    // Zera memória e os booleanos de blocos allocados
     for(size_t i = 0; i < memory_size; i++)
     {
+        
         b_allocated_blocks[i] = 0;
+        // memory_blocks[i] = 0;
+        memory_blocks[i] = rand() % rand() % 256; // Trocar pro de cima depois
     }
 
     FILE *p_file;
@@ -129,7 +134,9 @@ int main(int argc, char *argv[])
     //printf("(1) Circular Fit \n (2) Worst Fit")
     // scanf("%d", &option);
 
-    print_memory(memory_blocks, b_allocated_blocks, memory_size);    
+    print_memory_blocks(b_allocated_blocks, memory_size);
+
+    print_memory_bytes(memory_blocks, memory_size);
 
     // TODO: será modificado pela lista de bytes acima
     struct Memory_block *block_list;
@@ -343,13 +350,13 @@ char *find_proc_by_id(size_t pid)
     return "";
 }
 
-void print_memory(BYTE *memory_list, BYTE *b_allocated_blocks, size_t memory_size)
+void print_memory_blocks(BYTE *b_allocated_blocks, size_t memory_size)
 {
     for(size_t i = 0; i < memory_size; i++)
     {
-        if (i%64 == 0)
+        if (i%64 == 0) // Cada 64 bytes (cada byte sendo 00-FF, 256 bits)
         {
-            printf("0x%07zx ", i);
+            printf("0x%07zX ", i*256);  // Cada fila de Hex vai de 0x0000 até 0x4000 (0-16383 bits, 64 bytes)
         }
 
         if (b_allocated_blocks[i] == 1)
@@ -362,6 +369,24 @@ void print_memory(BYTE *memory_list, BYTE *b_allocated_blocks, size_t memory_siz
         }
 
         if (i%64 == 63)
+        {
+            printf("\n");
+        }
+    }
+}
+
+void print_memory_bytes(BYTE *memory_blocks, size_t memory_size)
+{
+    for(size_t i = 0; i < memory_size; i++)
+    {
+        if (i%32 == 0) // Cada 32 bytes (cada byte sendo 00-FF, 256 bits)
+        {
+            printf("0x%07zX", i*256);  // Cada fila de Hex vai de 0x0000 até 0x2000 (0-8192 bits, 32 bytes)
+        }
+
+        printf(" %02hhX", memory_blocks[i]);
+
+        if (i%32 == 31)
         {
             printf("\n");
         }
