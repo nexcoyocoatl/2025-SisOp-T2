@@ -140,45 +140,45 @@ int main(int argc, char *argv[])
     // Executa instruções
     for (size_t i = 0; i < num_instructions; i++)
     {
+        size_t proc_start_address;
+        size_t proc_size = find_proc_size_by_id(instructions[i].pid);
+        char *proc_name = find_proc_name_by_id(instructions[i].pid);
+
         // IN(proc, size)
         if (instructions[i].operation == ALLOC)
-        {
-            size_t proc_start_address;
-            size_t proc_size = find_proc_size_by_id(instructions[i].pid);
+        {            
             // if ( (proc_start_address = (size_t)(memlist_add_circular(memory_list, instructions[i].pid, proc_size))) == -1 ) // Circular-fit
             if ( (proc_start_address = memlist_add_worst(memory_list, instructions[i].pid, proc_size)) == -1 ) // Worst-fit
             {
-                printf("ESPAÇO INSUFICIENTE DE MEMÓRIA\n");
-                continue;
+                printf("PROCESSO %s: NÃO ALOCADO, ESPAÇO INSUFICIENTE DE MEMÓRIA\n", proc_name);
             }
-
-            for (int j = proc_start_address; j <= proc_start_address + proc_size; j++)
+            else
             {
-                memory_blocks[j] = rand() % 256;
-                b_allocated_blocks[j] = ALLOC;
+                for (int j = proc_start_address; j <= proc_start_address + proc_size; j++)
+                {
+                    memory_blocks[j] = rand() % 256;
+                    b_allocated_blocks[j] = ALLOC;
+                }
+                printf("PROCESSO %s: TAMANHO %lu, INSERIDO NO ENDEREÇO 0x%07zX (%lu)\n",
+                        proc_name, proc_size, proc_start_address, proc_start_address);
             }
-            char *proc_name = find_proc_name_by_id(instructions[i].pid);
-            printf("PROCESSO %s DE TAMANHO %lu INSERIDO NO ENDEREÇO 0x%07zX (%lu)\n",
-                    proc_name, proc_size, proc_start_address, proc_start_address);
         }
         // OUT(proc)
         else
         {
-            size_t proc_start_address;
-            size_t proc_size = find_proc_size_by_id(instructions[i].pid);
             if ( (proc_start_address = (size_t)(memlist_remove_node(memory_list, instructions[i].pid))) == -1 )
             {
-                printf("PROCESSO NÃO ENCONTRADO\n");
-                continue;
+                printf("PROCESSO %s: NÃO ENCONTRADO PARA REMOÇÃO\n", proc_name);
             }
-
-            for (int j = proc_start_address; j <= proc_start_address + proc_size; j++)
+            else
             {
-                b_allocated_blocks[j] = DISALLOC;
+                for (int j = proc_start_address; j <= proc_start_address + proc_size; j++)
+                {
+                    b_allocated_blocks[j] = DISALLOC;
+                }
+                printf("PROCESSO %s: TAMANHO %lu, REMOVIDO DO ENDEREÇO 0x%07zX (%lu)\n",
+                       proc_name, proc_size, proc_start_address, proc_start_address);
             }
-            char *proc_name = find_proc_name_by_id(instructions[i].pid);
-            printf("PROCESSO %s DE TAMANHO %lu REMOVIDO DO ENDEREÇO 0x%07zX (%lu)\n",
-                   proc_name, proc_size, proc_start_address, proc_start_address);
         }
 
         memlist_print(memory_list);
