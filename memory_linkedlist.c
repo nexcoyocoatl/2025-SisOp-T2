@@ -81,7 +81,7 @@ long long memlist_add_circular(struct Memory_list* lst, size_t pid, size_t proce
     current->b_allocated = ALLOC;
     current->pid = pid;
 
-    last = current->next; // TODO: Mudar
+    last = current;
 
     return (long long)current->start_address;
 }
@@ -146,6 +146,7 @@ long long memlist_add_worst(struct Memory_list* lst, size_t pid, size_t process_
 long long memlist_remove_node(struct Memory_list* lst, size_t pid)
 {
     uint8_t b_found = 0;
+    uint8_t b_circular = 0;
     size_t address;
 
     struct Node* current = lst->head;
@@ -171,6 +172,11 @@ long long memlist_remove_node(struct Memory_list* lst, size_t pid)
     // Endereço de início do processo que será retornado no fim
     address = current->start_address;
 
+    if (last != NULL)
+    {
+        b_circular = 1;
+    }
+
     // Se o anterior é livre, junta
     if (prev_node != current && prev_node->b_allocated == DISALLOC)
     {
@@ -179,6 +185,12 @@ long long memlist_remove_node(struct Memory_list* lst, size_t pid)
         free(current);
         current = prev_node;
         lst->size--;
+
+        // Caso o last seja perdido com esta junção
+        if (b_circular && last == NULL)
+        {
+            last = current;
+        }
     }
 
     current->b_allocated = DISALLOC;

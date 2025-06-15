@@ -54,8 +54,8 @@ int main(int argc, char *argv[])
 
     srand(time(NULL));
 
-    size_t memory_size = 16;    // TODO: MUDAR PARA ESCOLHA DO USUÁRIO
-    uint8_t strategy = WORST;   // TODO: MUDAR PARA ESCOLHA DO USUÁRIO
+    size_t memory_size = 128;    // TODO: MUDAR PARA ESCOLHA DO USUÁRIO
+    uint8_t strategy = CIRCULAR;   // TODO: MUDAR PARA ESCOLHA DO USUÁRIO
 
     if ( memory_size > 0 && ((memory_size & (memory_size - 1)) != 0) ) { return 1; } // checa se é >0 e potencia de 2
 
