@@ -4,7 +4,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <unistd.h>
 
 #include "instruction.h"
 #include "memory_linkedlist.h"
@@ -157,7 +156,8 @@ int main(int argc, char *argv[])
                 b_allocated_blocks[j] = ALLOC;
             }
             char *proc_name = find_proc_name_by_id(instructions[i].pid);
-            printf("PROCESSO %s DE TAMANHO %lu INSERIDO NO ENDEREÇO %lu\n", proc_name, proc_size, proc_start_address);
+            printf("PROCESSO %s DE TAMANHO %lu INSERIDO NO ENDEREÇO 0x%07zX (%lu)\n",
+                    proc_name, proc_size, proc_start_address, proc_start_address);
         }
         // OUT(proc)
         else
@@ -175,7 +175,8 @@ int main(int argc, char *argv[])
                 b_allocated_blocks[j] = DISALLOC;
             }
             char *proc_name = find_proc_name_by_id(instructions[i].pid);
-            printf("PROCESSO %s DE TAMANHO %lu REMOVIDO DO ENDEREÇO %lu\n", proc_name, proc_size, proc_start_address);
+            printf("PROCESSO %s DE TAMANHO %lu REMOVIDO DO ENDEREÇO 0x%07zX (%lu)\n",
+                   proc_name, proc_size, proc_start_address, proc_start_address);
         }
 
         if (DEBUG)
