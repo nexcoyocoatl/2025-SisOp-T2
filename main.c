@@ -32,7 +32,7 @@ void print_memory_blocks(BYTE *b_allocated_blocks, size_t memory_size);
 void print_memory_bytes(BYTE *memory_list, size_t memory_size);
 
 enum {
-    CIRCULAR = 0,
+    CIRCULAR = 1,
     WORST
 };
 
@@ -165,7 +165,7 @@ int main(int argc, char *argv[])
             {
                 proc_start_address = (size_t)(memlist_add_circular(memory_list, instructions[i].pid, proc_size));
             }
-            else if (strategy == WORST)
+            if (strategy == WORST)
             {
                 proc_start_address = (size_t)memlist_add_worst(memory_list, instructions[i].pid, proc_size);
             }
