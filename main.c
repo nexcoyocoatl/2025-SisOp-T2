@@ -57,7 +57,7 @@ int main(int argc, char *argv[])
     srand(time(NULL));
 
     size_t memory_size = 128;    // TODO: MUDAR PARA ESCOLHA DO USUÁRIO
-    uint8_t strategy = WORST;   // TODO: MUDAR PARA ESCOLHA DO USUÁRIO
+    uint8_t strategy = CIRCULAR;   // TODO: MUDAR PARA ESCOLHA DO USUÁRIO
 
     if ( memory_size > 0 && ((memory_size & (memory_size - 1)) != 0) ) { return 1; } // checa se é >0 e potencia de 2
 
@@ -195,7 +195,7 @@ int main(int argc, char *argv[])
             }
             else
             {
-                for (int j = proc_start_address; j <= proc_start_address + proc_size; j++)
+                for (int j = proc_start_address; j < proc_start_address + proc_size; j++)
                 {
                     memory_blocks[j] = rand() % 256;
                     b_allocated_blocks[j] = ALLOC;
@@ -222,7 +222,7 @@ int main(int argc, char *argv[])
             }
             else
             {
-                for (int j = proc_start_address; j <= proc_start_address + proc_size; j++)
+                for (int j = proc_start_address; j < proc_start_address + proc_size; j++)
                 {
                     b_allocated_blocks[j] = DISALLOC;
                 }

@@ -14,15 +14,15 @@ struct Memory_list *memlist_create(size_t memory_size)
 {
     struct Memory_list *lst = malloc(sizeof(struct Memory_list *));
 
-    struct List_node *List_node = malloc(sizeof(struct List_node *));
+    struct List_node *node = malloc(sizeof(struct List_node *));
 
-    List_node->b_allocated = DISALLOC;
-    List_node->start_address = 0;
-    List_node->size = memory_size;
+    node->b_allocated = DISALLOC;
+    node->start_address = 0;
+    node->size = memory_size;
 
-    List_node->next = List_node;
-    lst->head = List_node;
-    lst->tail = List_node;
+    node->next = node;
+    lst->head = node;
+    lst->tail = node;
     lst->size = 1;
     
     return lst;
@@ -140,7 +140,7 @@ long long memlist_add_worst(struct Memory_list *lst, size_t pid, size_t process_
     return (long long)(worst->start_address);
 }
 
-// TODO: Adicionar sistema buddy com inserção de List_nodes
+// TODO: Adicionar sistema buddy com inserção de nodes
 
 // Remove nodo independente da estratégia
 long long memlist_remove_node(struct Memory_list *lst, size_t pid)
@@ -150,7 +150,7 @@ long long memlist_remove_node(struct Memory_list *lst, size_t pid)
     size_t address;
 
     struct List_node *current = lst->head;
-    struct List_node *prev_List_node = current;
+    struct List_node *prev_node = current;
 
     do
     {
@@ -161,7 +161,7 @@ long long memlist_remove_node(struct Memory_list *lst, size_t pid)
             break;
         }
 
-        prev_List_node = current;
+        prev_node = current;
         current = current->next;
     }
     while (current != lst->head);
@@ -178,12 +178,12 @@ long long memlist_remove_node(struct Memory_list *lst, size_t pid)
     }
 
     // Se o anterior é livre, junta
-    if (prev_List_node != current && prev_List_node->b_allocated == DISALLOC)
+    if (prev_node != current && prev_node->b_allocated == DISALLOC)
     {
-        prev_List_node->size += current->size;
-        prev_List_node->next = current->next;
+        prev_node->size += current->size;
+        prev_node->next = current->next;
         free(current);
-        current = prev_List_node;
+        current = prev_node;
         lst->size--;
 
         // Caso o last seja perdido com esta junção
@@ -198,14 +198,91 @@ long long memlist_remove_node(struct Memory_list *lst, size_t pid)
     // Se o próximo também é livre, junta
     if (current->next != lst->head && current->next->b_allocated == DISALLOC)
     {
-        struct List_node *next_List_node = current->next;
-        current->size += next_List_node->size;
-        current->next = next_List_node->next;
-        free(next_List_node);
+        struct List_node *next_node = current->next;
+        current->size += next_node->size;
+        current->next = next_node->next;
+        free(next_node);
         lst->size--;
     }
 
     return (long long)address;
+}
+
+// Desnecessário?
+int memlist_remove_node_index(struct Memory_list *lst, size_t index)
+{
+    size_t counter = 0;
+
+    if (lst->size == 0)
+    {
+        return 0;
+    }
+
+    struct List_node *current = lst->head;
+
+    if (index == 0)
+    {
+        lst->head = lst->head->next;
+        lst->size--;
+
+        if (lst->size == 0)
+        {
+            lst->tail = NULL;
+        }
+
+        free(current);
+        return 1;
+    }
+
+    while (current->next != NULL)
+    {
+        counter++;
+        if (counter == index)
+        {
+            struct List_node *temp = current->next;
+
+            if (temp == lst->tail)
+            {
+                lst->tail = current;
+            }
+
+            current->next = current->next->next;
+            lst->size--;
+
+            free(temp);
+
+            if (lst->size == 0)
+            {
+                lst->tail = NULL;
+            }
+
+            return 2;
+        }
+        current = current->next;
+    }
+
+    return 0;
+}
+
+// Desnecessário?
+struct List_node *memlist_get_node(struct Memory_list *lst, size_t index)
+{
+    if (lst->size == 0) return NULL;
+        
+    struct List_node *current = lst->head;
+    size_t counter = 0;
+
+    while(current != NULL)
+    {
+        if (counter == index)
+        {
+            return current;
+        }
+        counter++;
+        current = current->next;
+    }
+
+    return NULL;
 }
 
 // Imprime todos nodos (talvez melhorar?)
@@ -271,15 +348,15 @@ void memlist_flush(struct Memory_list *lst, size_t memory_size)
         lst->size--;
     }
 
-    struct List_node *List_node = malloc(sizeof(struct List_node *));
+    struct List_node *node = malloc(sizeof(struct List_node *));
 
-    List_node->b_allocated = DISALLOC;
-    List_node->start_address = 0;
-    List_node->size = memory_size;
+    node->b_allocated = DISALLOC;
+    node->start_address = 0;
+    node->size = memory_size;
 
-    List_node->next = List_node;
-    lst->head = List_node;
-    lst->tail = List_node;
+    node->next = node;
+    lst->head = node;
+    lst->tail = node;
     lst->size = 1;
 }
 
