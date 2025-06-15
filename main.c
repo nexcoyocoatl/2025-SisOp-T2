@@ -51,7 +51,7 @@ int main(int argc, char *argv[])
 
     srand(time(NULL));
 
-    size_t memory_size = 64; // TODO: MUDAR PARA ESCOLHA DO USUÁRIO
+    size_t memory_size = 16; // TODO: MUDAR PARA ESCOLHA DO USUÁRIO
 
     if ( memory_size > 0 && ((memory_size & (memory_size - 1)) != 0) ) { return 1; } // checa se é >0 e potencia de 2
 
@@ -106,14 +106,14 @@ int main(int argc, char *argv[])
 
     processes = malloc(sizeof(struct Process) * proc_count);
 
-    printf("%lu, %lu\n", line_count, proc_count);
+    struct Memory_list *memory_list = memlist_create(memory_size);
+
+    // printf("%lu, %lu\n", line_count, proc_count); // REMOVER
 
     // Lê arquivo pela terceira vez (talvez mudar isso) e adiciona processos e instrucoes em suas respectivas listas
     read_file(p_file);
 
-    fclose(p_file);
-
-    struct Memory_list *memory_list = memlist_create(memory_size);
+    fclose(p_file);    
 
     // perguntar politica (circular ou worst fit)
     //int option;
@@ -135,6 +135,8 @@ int main(int argc, char *argv[])
         }
     }
 
+    memlist_print(memory_list);
+
     // Executa instruções
     for (size_t i = 0; i < num_instructions; i++)
     {
@@ -143,8 +145,8 @@ int main(int argc, char *argv[])
         {
             size_t proc_start_address;
             size_t proc_size = find_proc_size_by_id(instructions[i].pid);
-            if ( (proc_start_address = (size_t)(memlist_add_circular(memory_list, instructions[i].pid, proc_size))) == -1 )
-            // if ( (proc_start_address = memlist_add_worst(memory_list, instructions[i].pid, proc_size)) == -1 )
+            // if ( (proc_start_address = (size_t)(memlist_add_circular(memory_list, instructions[i].pid, proc_size))) == -1 ) // Circular-fit
+            if ( (proc_start_address = memlist_add_worst(memory_list, instructions[i].pid, proc_size)) == -1 ) // Worst-fit
             {
                 printf("ESPAÇO INSUFICIENTE DE MEMÓRIA\n");
                 continue;
@@ -179,20 +181,20 @@ int main(int argc, char *argv[])
                    proc_name, proc_size, proc_start_address, proc_start_address);
         }
 
+        memlist_print(memory_list);
+
         if (DEBUG)
         {
             print_memory_blocks(b_allocated_blocks, memory_size);
             print_memory_bytes(memory_blocks, memory_size);
+        }
+
+        if (DEBUG > 1)
+        {
             memlist_dump(memory_list);
         }
 
         printf("\n");
-    }
-        
-    if (DEBUG)
-    {
-        print_memory_blocks(b_allocated_blocks, memory_size);
-        print_memory_bytes(memory_blocks, memory_size);
     }
 
     // Testes pro clear (retirar depois)

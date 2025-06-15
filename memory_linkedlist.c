@@ -295,6 +295,33 @@ void memlist_dump(struct Memory_list* lst)
     while (current != lst->head);
 }
 
+void memlist_print(struct Memory_list* lst)
+{
+    struct Node* current = lst->head;
+    size_t contiguous_free_blocks = 0;
+
+    printf("|");
+    do
+    {
+        if (!current->b_allocated)
+        {
+            contiguous_free_blocks += current->size;
+        }
+        else
+        {
+            if (contiguous_free_blocks > 0)
+                { printf("%lu|", contiguous_free_blocks); }
+                contiguous_free_blocks = 0;
+        }
+
+        current = current->next;
+    }
+    while (current != lst->head);
+    if (contiguous_free_blocks > 0)
+        { printf("%lu|", contiguous_free_blocks); }
+    printf("\n");
+}
+
 // Limpa toda a linked list, deixando apenas um nodo do tamanho máximo de memória
 void memlist_flush(struct Memory_list* lst, size_t memory_size)
 {
