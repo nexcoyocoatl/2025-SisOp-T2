@@ -1,6 +1,6 @@
 #include <stddef.h>
 
-#define STRING_BUFFER 32
+#define INST_STRING_BUFFER 32
 
 enum Operation
 {
@@ -19,5 +19,5 @@ struct Process
 {
     size_t pid;
     size_t size;
-    char name[STRING_BUFFER];
+    char name[INST_STRING_BUFFER];
 };

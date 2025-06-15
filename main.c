@@ -8,6 +8,7 @@
 
 #include "instruction.h"
 #include "memory_linkedlist.h"
+#include "memory_tree.h"
 
 typedef uint8_t BYTE;
 
@@ -33,7 +34,8 @@ void print_memory_bytes(BYTE *memory_list, size_t memory_size);
 
 enum {
     CIRCULAR = 1,
-    WORST
+    WORST,
+    BUDDY
 };
 
 // ler de um .txt:
@@ -55,7 +57,7 @@ int main(int argc, char *argv[])
     srand(time(NULL));
 
     size_t memory_size = 128;    // TODO: MUDAR PARA ESCOLHA DO USUÁRIO
-    uint8_t strategy = CIRCULAR;   // TODO: MUDAR PARA ESCOLHA DO USUÁRIO
+    uint8_t strategy = WORST;   // TODO: MUDAR PARA ESCOLHA DO USUÁRIO
 
     if ( memory_size > 0 && ((memory_size & (memory_size - 1)) != 0) ) { return 1; } // checa se é >0 e potencia de 2
 
@@ -110,9 +112,17 @@ int main(int argc, char *argv[])
 
     processes = malloc(sizeof(struct Process) * proc_count);
 
-    struct Memory_list *memory_list = memlist_create(memory_size);
+    struct Memory_list* memory_list;
+    struct Memory_tree* memory_tree;
 
-    // printf("%lu, %lu\n", line_count, proc_count); // REMOVER
+    if (strategy == BUDDY)
+    {
+        memory_tree = memtree_create(memory_size);
+    }
+    else
+    {
+        memory_list = memlist_create(memory_size);
+    }
 
     // Lê arquivo pela terceira vez (talvez mudar isso) e adiciona processos e instrucoes em suas respectivas listas
     read_file(p_file);
@@ -139,7 +149,15 @@ int main(int argc, char *argv[])
         }
     }
 
-    memlist_print(memory_list);
+    if (strategy == BUDDY)
+    {
+        memtree_print(memory_tree);
+    }
+    else
+    {
+        memlist_print(memory_list);
+    }
+
     if (DEBUG)
     {
         print_memory_blocks(b_allocated_blocks, memory_size);
@@ -158,18 +176,22 @@ int main(int argc, char *argv[])
         if (instructions[i].operation == ALLOC)
         {
             // Estratégias de alocação
-            if (strategy == CIRCULAR)
+            switch (strategy)
             {
+            case CIRCULAR:
                 proc_start_address = (size_t)(memlist_add_circular(memory_list, instructions[i].pid, proc_size));
-            }
-            if (strategy == WORST)
-            {
+                break;
+            case WORST:
                 proc_start_address = (size_t)memlist_add_worst(memory_list, instructions[i].pid, proc_size);
+                break;
+            case BUDDY:
+                proc_start_address = (size_t)memtree_add_buddy(memory_tree, instructions[i].pid, proc_size);
+                break;
             }
             
             if (proc_start_address == -1)
             {
-                printf("PROCESSO %s: NÃO ALOCADO, ESPAÇO INSUFICIENTE DE MEMÓRIA\n", proc_name);
+                printf("PROCESSO %s: TAMANHO %lu, NÃO ALOCADO. ESPAÇO INSUFICIENTE DE MEMÓRIA\n", proc_name, proc_size);
             }
             else
             {
@@ -184,7 +206,17 @@ int main(int argc, char *argv[])
         }
         else    // OUT(proc)
         {
-            if ( (proc_start_address = (size_t)(memlist_remove_node(memory_list, instructions[i].pid))) == -1 )
+            switch (strategy)
+            {
+            case BUDDY:
+                proc_start_address = (size_t)(memtree_remove_node(memory_tree, instructions[i].pid));
+                break;
+            default:
+                proc_start_address = (size_t)(memlist_remove_node(memory_list, instructions[i].pid));
+                break;
+            }
+
+            if (proc_start_address == -1)
             {
                 printf("PROCESSO %s: NÃO ENCONTRADO PARA REMOÇÃO\n", proc_name);
             }
@@ -199,7 +231,14 @@ int main(int argc, char *argv[])
             }
         }
 
-        memlist_print(memory_list);
+        if (strategy == BUDDY)
+        {
+            memtree_print(memory_tree);
+        }
+        else
+        {
+            memlist_print(memory_list);
+        }
 
         if (DEBUG)
         {
@@ -209,20 +248,42 @@ int main(int argc, char *argv[])
 
         if (DEBUG > 1)
         {
-            memlist_dump(memory_list);
+            if (strategy == BUDDY)
+            {
+                memtree_dump(memory_tree);
+            }
+            else
+            {
+                memlist_dump(memory_list);
+            }
         }
 
         printf("\n");
     }
 
-    // Testes pro clear (retirar depois)
-    // memlist_flush(memory_list, memory_size);
-    // memlist_add_circular(memory_list, 0, 2);
-    // memlist_add_circular(memory_list, 1, 2);
-    // memlist_remove_node(memory_list, 0);
-    // memlist_add_worst(memory_list, 2, 2);
-    memlist_clear(memory_list);
-    // memlist_dump(memory_list);
+    
+
+    if (strategy == BUDDY)
+    {
+        // Testes pro clear (retirar depois)
+        // memtree_add_buddy(memory_tree, 0, 2);
+        // memtree_add_buddy(memory_tree, 1, 2);
+        // memtree_remove_node(memory_tree, 0);
+        // memtree_add_buddy(memory_tree, 2, 2);
+        memtree_clear(memory_tree);
+        // memtree_dump(memory_tree);
+    }
+    else
+    {
+        // Testes pro clear (retirar depois)
+        // memlist_flush(memory_list, memory_size);
+        // memlist_add_circular(memory_list, 0, 2);
+        // memlist_add_circular(memory_list, 1, 2);
+        // memlist_remove_node(memory_list, 0);
+        // memlist_add_worst(memory_list, 2, 2);
+        memlist_clear(memory_list);
+        // memlist_dump(memory_list);
+    }
 
     // "Desaloca" toda memória mudando todos booleans para desalocados
     // Memória física continua com o que tinha nos blocos, que agora é garbage
@@ -375,7 +436,7 @@ size_t count_processes_from_file(FILE *p_file, size_t line_count)
 
             if (char_count > 0)
             {
-                process_names[proc_count] = malloc(sizeof(char)*STRING_BUFFER);
+                process_names[proc_count] = malloc(sizeof(char) * STRING_BUFFER);
                 strncpy(process_names[proc_count], proc_name, STRING_BUFFER);
                 proc_count++;
             }
@@ -455,7 +516,7 @@ void print_memory_blocks(BYTE *b_allocated_blocks, size_t memory_size)
     {
         if (i%64 == 0) // Cada 64 bytes (cada byte sendo 00-FF, 256 bits)
         {
-            printf("0x%07zX ", i*256);  // Cada fila de Hex vai de 0x0000 até 0x4000 (0-16383 bits, 64 bytes)
+            printf("0x%07zX ", i * 256);  // Cada fila de Hex vai de 0x0000 até 0x4000 (0-16383 bits, 64 bytes)
         }
 
         if (b_allocated_blocks[i] == ALLOC)
@@ -482,7 +543,7 @@ void print_memory_bytes(BYTE *memory_blocks, size_t memory_size)
     {
         if (i%32 == 0) // Cada 32 bytes (cada byte sendo 00-FF, 256 bits)
         {
-            printf("0x%07zX", i*256);  // Cada fila de Hex vai de 0x0000 até 0x2000 (0-8192 bits, 32 bytes)
+            printf("0x%07zX", i * 256);  // Cada fila de Hex vai de 0x0000 até 0x2000 (0-8192 bits, 32 bytes)
         }
 
         printf(" %02hhX", memory_blocks[i]);
