@@ -32,6 +32,7 @@ int memlist_remove_node(struct Memory_list* lst, size_t program_id);
 int memlist_remove_node_index(struct Memory_list* lst, size_t index);
 struct Node *memlist_get_node(struct Memory_list* lst, size_t index);
 void memlist_dump(struct Memory_list* lst);
-void memlist_clear(struct Memory_list* lst, size_t memory_size);
+void memlist_flush(struct Memory_list* lst, size_t memory_size);
+void memlist_clear(struct Memory_list* lst);
 
 #endif

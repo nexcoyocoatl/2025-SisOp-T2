@@ -5,9 +5,9 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+
 #include "instruction.h"
 #include "memory_linkedlist.h"
-// #include "memory_linkedlist.h"
 
 typedef uint8_t BYTE;
 
@@ -15,7 +15,7 @@ typedef uint8_t BYTE;
 #define DEBUG 1
 
 BYTE *memory_blocks;        // Memória física
-BYTE *b_allocated_blocks;   // Indica se o bloco está alocado ou não (também é um byte, pra usar de boolean)
+uint8_t *b_allocated_blocks;   // Indica se o bloco está alocado ou não (também é um uint8_t, pra usar de boolean)
 
 struct Instruction *instructions;
 struct Process *processes;
@@ -25,8 +25,8 @@ size_t num_processes;
 size_t count_lines_file(FILE *p_file);
 size_t count_processes_from_file(FILE *p_file, size_t line_count);
 int read_file(FILE *p_file);
-int find_proc_by_name(char *name);
-char *find_proc_by_id(size_t pid);
+int find_proc_id_by_name(char *name);
+char *find_proc_name_by_id(size_t pid);
 int find_proc_size_by_id(size_t pid);
 void print_memory_blocks(BYTE *b_allocated_blocks, size_t memory_size);
 void print_memory_bytes(BYTE *memory_list, size_t memory_size);
@@ -52,7 +52,7 @@ int main(int argc, char *argv[])
 
     srand(time(NULL));
 
-    size_t memory_size = 32; // TODO: MUDAR PARA ESCOLHA DO USUÁRIO
+    size_t memory_size = 64; // TODO: MUDAR PARA ESCOLHA DO USUÁRIO
 
     if ( memory_size > 0 && ((memory_size & (memory_size - 1)) != 0) ) { return 1; } // checa se é >0 e potencia de 2
 
@@ -63,7 +63,7 @@ int main(int argc, char *argv[])
     for(size_t i = 0; i < memory_size; i++)
     {
         
-        b_allocated_blocks[i] = 0;
+        b_allocated_blocks[i] = DISALLOC;
         memory_blocks[i] = 0;
         // memory_blocks[i] = rand() % rand() % 256; // Exemplo de garbage aleatório por toda memória
     }
@@ -122,6 +122,7 @@ int main(int argc, char *argv[])
     //printf("(1) Circular Fit \n (2) Worst Fit")
     // scanf("%d", &option);
 
+    // Mostra a lista de processos e instruções
     if (DEBUG)
     {
         for (size_t i = 0; i < num_processes; i++)
@@ -135,8 +136,10 @@ int main(int argc, char *argv[])
         }
     }
 
+    // Executa instruções
     for (size_t i = 0; i < num_instructions; i++)
     {
+        // IN(proc, size)
         if (instructions[i].operation == ALLOC)
         {
             size_t proc_start_address;
@@ -148,14 +151,15 @@ int main(int argc, char *argv[])
                 continue;
             }
 
-            for (int j = proc_start_address; j <= proc_size; j++)
+            for (int j = proc_start_address; j <= proc_start_address + proc_size; j++)
             {
-                memory_blocks[i] = rand() % 256;
-                b_allocated_blocks[i] = 1;
+                memory_blocks[j] = rand() % 256;
+                b_allocated_blocks[j] = ALLOC;
             }
-            char *proc_name = find_proc_by_id(instructions[i].pid);
+            char *proc_name = find_proc_name_by_id(instructions[i].pid);
             printf("PROCESSO %s DE TAMANHO %lu INSERIDO NO ENDEREÇO %lu\n", proc_name, proc_size, proc_start_address);
         }
+        // OUT(proc)
         else
         {
             size_t proc_start_address;
@@ -163,30 +167,41 @@ int main(int argc, char *argv[])
             if ( (proc_start_address = memlist_remove_node(memory_list, instructions[i].pid)) == -1 )
             {
                 printf("PROCESSO NÃO ENCONTRADO\n");
+                continue;
             }
 
-            for (int j = proc_start_address; j <= proc_size; j++)
+            for (int j = proc_start_address; j <= proc_start_address + proc_size; j++)
             {
-                b_allocated_blocks[i] = 0;
+                b_allocated_blocks[j] = DISALLOC;
             }
-            char *proc_name = find_proc_by_id(instructions[i].pid);
+            char *proc_name = find_proc_name_by_id(instructions[i].pid);
             printf("PROCESSO %s DE TAMANHO %lu REMOVIDO DO ENDEREÇO %lu\n", proc_name, proc_size, proc_start_address);
         }
 
-        // if (DEBUG)
-        // {
-        //     print_memory_blocks(b_allocated_blocks, memory_size);
-        //     print_memory_bytes(memory_blocks, memory_size);
-        // }
+        if (DEBUG)
+        {
+            print_memory_blocks(b_allocated_blocks, memory_size);
+            print_memory_bytes(memory_blocks, memory_size);
+            memlist_dump(memory_list);
+        }
 
         printf("\n");
     }
         
-    print_memory_blocks(b_allocated_blocks, memory_size);
+    if (DEBUG)
+    {
+        print_memory_blocks(b_allocated_blocks, memory_size);
+        print_memory_bytes(memory_blocks, memory_size);
+    }
 
-    print_memory_bytes(memory_blocks, memory_size);
-
-    memlist_clear(memory_list, memory_size);
+    // Testes pro clear (retirar depois)
+    // memlist_flush(memory_list, memory_size);
+    // memlist_add_circular(memory_list, 0, 2);
+    // memlist_add_circular(memory_list, 1, 2);
+    // memlist_remove_node(memory_list, 0);
+    // memlist_add_worst(memory_list, 2, 2);
+    memlist_clear(memory_list);
+    // memlist_dump(memory_list);
 
     return 0;
 }
@@ -211,7 +226,7 @@ int read_file(FILE *p_file)
         // Um tipo de regex do C pra ser usado com IN(nome,num)
         if (sscanf(s, "%*[^'(']%*c%[^',']%*c%d%*[^'\0']", proc_name, &size) == 2)
         {
-            if ((pid = find_proc_by_name(proc_name)) == -1)
+            if ((pid = find_proc_id_by_name(proc_name)) == -1)
             {
                 pid = num_processes;
                 strcpy(processes[pid].name, proc_name);
@@ -229,7 +244,7 @@ int read_file(FILE *p_file)
         // Um tipo de regex do C pra ser usado com OUT(nome)
         else if (sscanf(s, "%*[^'(']%*c%[^')']%*[^'\0']", proc_name) == 1)
         {
-            if ((pid = find_proc_by_name(proc_name)) == -1)
+            if ((pid = find_proc_id_by_name(proc_name)) == -1)
             {
                 printf("Invalid instruction.\nExiting program...\n");
                 return 0;
@@ -351,7 +366,7 @@ size_t count_processes_from_file(FILE *p_file, size_t line_count)
 }
 
 // Funcoes auxiliares pra achar processo por nome ou pid
-int find_proc_by_name(char *name)
+int find_proc_id_by_name(char *name)
 {
     if (num_processes == 0)
     {
@@ -369,7 +384,7 @@ int find_proc_by_name(char *name)
     return -1;
 }
 
-char *find_proc_by_id(size_t pid)
+char *find_proc_name_by_id(size_t pid)
 {
     if (num_processes == 0)
     {
@@ -405,6 +420,7 @@ int find_proc_size_by_id(size_t pid)
     return 0;
 }
 
+// Imprime blocos de memória
 void print_memory_blocks(BYTE *b_allocated_blocks, size_t memory_size)
 {
     for(size_t i = 0; i < memory_size; i++)
@@ -414,7 +430,7 @@ void print_memory_blocks(BYTE *b_allocated_blocks, size_t memory_size)
             printf("0x%07zX ", i*256);  // Cada fila de Hex vai de 0x0000 até 0x4000 (0-16383 bits, 64 bytes)
         }
 
-        if (b_allocated_blocks[i] == 1)
+        if (b_allocated_blocks[i] == ALLOC)
         {
             printf("█");
         }
@@ -431,6 +447,7 @@ void print_memory_blocks(BYTE *b_allocated_blocks, size_t memory_size)
     printf("\n");
 }
 
+// Imprime memória byte por byte em hexadecimal, como um hexdump de um programa
 void print_memory_bytes(BYTE *memory_blocks, size_t memory_size)
 {
     for(size_t i = 0; i < memory_size; i++)
@@ -449,8 +466,3 @@ void print_memory_bytes(BYTE *memory_blocks, size_t memory_size)
     }
     printf("\n");
 }
-
-// TODO: Possivelmente serão adicionadas na linked list
-// worst fit
-
-// circular fit
