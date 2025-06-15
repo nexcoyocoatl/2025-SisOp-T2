@@ -122,7 +122,7 @@ int main(int argc, char *argv[])
     // scanf("%d", &option);
 
     // Mostra a lista de processos e instruções
-    if (DEBUG)
+    if (DEBUG > 2)
     {
         for (size_t i = 0; i < num_processes; i++)
         {
