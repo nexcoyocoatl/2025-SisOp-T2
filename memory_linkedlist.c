@@ -35,7 +35,7 @@ size_t memlist_len(struct Memory_list* lst)
 }
 
 // Adiciona nodo por circular-fit
-int memlist_add_circular(struct Memory_list* lst, size_t pid, size_t process_size)
+long long memlist_add_circular(struct Memory_list* lst, size_t pid, size_t process_size)
 {
     uint8_t b_found = 0;
     struct Node* current;
@@ -83,11 +83,11 @@ int memlist_add_circular(struct Memory_list* lst, size_t pid, size_t process_siz
 
     last = current->next;
 
-    return (int)current->start_address; // Pode dar problema de ulong pra int, talvez retornar long long?
+    return (long long)current->start_address;
 }
 
 // Adiciona nodo por worst-fit
-int memlist_add_worst(struct Memory_list* lst, size_t pid, size_t process_size)
+long long memlist_add_worst(struct Memory_list* lst, size_t pid, size_t process_size)
 {
     uint8_t b_found = 0;
 
@@ -137,13 +137,13 @@ int memlist_add_worst(struct Memory_list* lst, size_t pid, size_t process_size)
     worst->b_allocated = ALLOC;
     worst->pid = pid;
 
-    return (int)(worst->start_address);
+    return (long long)(worst->start_address);
 }
 
 // TODO: Adicionar sistema buddy com inserção de nodes
 
 // Remove nodo independente da estratégia
-int memlist_remove_node(struct Memory_list* lst, size_t pid)
+long long memlist_remove_node(struct Memory_list* lst, size_t pid)
 {
     uint8_t b_found = 0;
     size_t address;
@@ -193,7 +193,7 @@ int memlist_remove_node(struct Memory_list* lst, size_t pid)
         lst->size--;
     }
 
-    return (int)address;
+    return (long long)address;
 }
 
 // Desnecessário?

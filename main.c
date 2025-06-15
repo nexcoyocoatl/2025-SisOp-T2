@@ -144,7 +144,7 @@ int main(int argc, char *argv[])
         {
             size_t proc_start_address;
             size_t proc_size = find_proc_size_by_id(instructions[i].pid);
-            if ( (proc_start_address = memlist_add_circular(memory_list, instructions[i].pid, proc_size)) == -1 )
+            if ( (proc_start_address = (size_t)(memlist_add_circular(memory_list, instructions[i].pid, proc_size))) == -1 )
             // if ( (proc_start_address = memlist_add_worst(memory_list, instructions[i].pid, proc_size)) == -1 )
             {
                 printf("ESPAÇO INSUFICIENTE DE MEMÓRIA\n");
@@ -164,7 +164,7 @@ int main(int argc, char *argv[])
         {
             size_t proc_start_address;
             size_t proc_size = find_proc_size_by_id(instructions[i].pid);
-            if ( (proc_start_address = memlist_remove_node(memory_list, instructions[i].pid)) == -1 )
+            if ( (proc_start_address = (size_t)(memlist_remove_node(memory_list, instructions[i].pid))) == -1 )
             {
                 printf("PROCESSO NÃO ENCONTRADO\n");
                 continue;
