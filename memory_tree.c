@@ -20,7 +20,7 @@ struct Memory_tree *memtree_create(size_t memory_size)
 
 int memtree_subdivide(struct Memory_tree *tree, size_t pid)
 {
-
+    
 }
 
 long long memtree_add_buddy(struct Memory_tree *tree, size_t pid, size_t process_size)

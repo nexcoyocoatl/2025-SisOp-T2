@@ -89,34 +89,25 @@ long long memlist_add_circular(struct Memory_list *lst, size_t pid, size_t proce
 // Adiciona nodo por worst-fit
 long long memlist_add_worst(struct Memory_list *lst, size_t pid, size_t process_size)
 {
-    uint8_t b_found = 0;
-
     struct List_node *current = lst->head;
-    struct List_node *worst = current;
+    struct List_node *worst = NULL;
 
     // Procura nodo desde o início da lista até voltar para o começo,
     // mesmo quando encontra um antes do final
     do
     {
         // Se existe um espaço livre maior, salva como worst-fit
-        if (!(current->b_allocated) && current->size > worst->size)
+        if (!(current->b_allocated) && (worst == NULL || current->size > worst->size))
         {
             worst = current;
-        }
-
-        // Se encontrou pelo menos um, marca flag como true
-        if (!b_found && (process_size <= worst->size))
-        {
-            b_found = 1;
         }
 
         current = current->next;
     }
     while (current != lst->head);
 
-    // Se não encontrou espaço, é porque não tem nenhum fragmento de tamanho
-    // livre suficiente, então retorna
-    if (!b_found) { return -1; }
+    // Se o worst está nulo ou é menor que o espaço necessário, retorna -1
+    if (worst == NULL || (process_size > worst->size)) { return -1; }
 
     // Se não preencheu exatamente, então divide em dois
     if (process_size < worst->size)
