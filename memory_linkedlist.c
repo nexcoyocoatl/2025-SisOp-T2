@@ -288,7 +288,7 @@ void memlist_dump(struct Memory_list* lst)
         char s[10];
         snprintf(s, 10, "%lu", current->pid);
         printf("[\n  allocated:%s%s\n  start address: %lu\n  size: %lu\n]\n",
-            current->b_allocated?"P\n pid: ":"H", current->b_allocated?s:"", current->start_address, current->size);
+            current->b_allocated?"P\n  pid: ":"H", current->b_allocated?s:"", current->start_address, current->size);
 
         current = current->next;
     }
