@@ -1,3 +1,4 @@
+#include <sys/types.h>
 #include <time.h>
 #include <ctype.h>
 #include <stdint.h>
@@ -30,6 +31,11 @@ int find_proc_size_by_id(size_t pid);
 void print_memory_blocks(BYTE *b_allocated_blocks, size_t memory_size);
 void print_memory_bytes(BYTE *memory_list, size_t memory_size);
 
+enum {
+    CIRCULAR = 0,
+    WORST
+};
+
 // ler de um .txt:
 // IN(<nome do processo>,<espaco que ocupa>)
 // OUT(<nome do processo>)
@@ -51,7 +57,8 @@ int main(int argc, char *argv[])
 
     srand(time(NULL));
 
-    size_t memory_size = 16; // TODO: MUDAR PARA ESCOLHA DO USUÁRIO
+    size_t memory_size = 16;    // TODO: MUDAR PARA ESCOLHA DO USUÁRIO  
+    uint8_t strategy = WORST;   // TODO: MUDAR PARA ESCOLHA DO USUÁRIO
 
     if ( memory_size > 0 && ((memory_size & (memory_size - 1)) != 0) ) { return 1; } // checa se é >0 e potencia de 2
 
@@ -152,9 +159,18 @@ int main(int argc, char *argv[])
 
         // IN(proc, size)
         if (instructions[i].operation == ALLOC)
-        {            
-            // if ( (proc_start_address = (size_t)(memlist_add_circular(memory_list, instructions[i].pid, proc_size))) == -1 ) // Circular-fit
-            if ( (proc_start_address = memlist_add_worst(memory_list, instructions[i].pid, proc_size)) == -1 ) // Worst-fit
+        {
+            // Estratégias de alocação
+            if (strategy == CIRCULAR)
+            {
+                proc_start_address = (size_t)(memlist_add_circular(memory_list, instructions[i].pid, proc_size));
+            }
+            else if (strategy == WORST)
+            {
+                proc_start_address = (size_t)memlist_add_worst(memory_list, instructions[i].pid, proc_size);
+            }
+            
+            if (proc_start_address == -1)
             {
                 printf("PROCESSO %s: NÃO ALOCADO, ESPAÇO INSUFICIENTE DE MEMÓRIA\n", proc_name);
             }
@@ -169,8 +185,7 @@ int main(int argc, char *argv[])
                         proc_name, proc_size, proc_start_address, proc_start_address);
             }
         }
-        // OUT(proc)
-        else
+        else    // OUT(proc)
         {
             if ( (proc_start_address = (size_t)(memlist_remove_node(memory_list, instructions[i].pid))) == -1 )
             {
