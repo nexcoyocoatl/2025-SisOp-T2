@@ -1,11 +1,12 @@
+#include <time.h>
 #include <ctype.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-#include "memory.h"
 #include "instruction.h"
+#include "memory_linkedlist.h"
 // #include "memory_linkedlist.h"
 
 typedef uint8_t BYTE;
@@ -26,6 +27,7 @@ size_t count_processes_from_file(FILE *p_file, size_t line_count);
 int read_file(FILE *p_file);
 int find_proc_by_name(char *name);
 char *find_proc_by_id(size_t pid);
+int find_proc_size_by_id(size_t pid);
 void print_memory_blocks(BYTE *b_allocated_blocks, size_t memory_size);
 void print_memory_bytes(BYTE *memory_list, size_t memory_size);
 
@@ -33,19 +35,12 @@ void print_memory_bytes(BYTE *memory_list, size_t memory_size);
 // IN(<nome do processo>,<espaco que ocupa>)
 // OUT(<nome do processo>)
 
-// exemplos:
-// IN(A,8) requisita alocação de 8 espaços para o processo A
-// IN(B,4)
-// OUT(A) Libera todos os espaços do processo A
-// OUT(B)
-
 // A escolha do tipo de política a ser aplicada (worst ou circular fit) deverá ser realizada em tempo de execução pelo usuário
 
 // se nao houver espaço suficiente para inserir processo:
 // print "ESPAÇO INSUFICIENTE DE MEMORIA"
-// continuar execução(?)
 
-// ./main <txt> <memoria>
+// ./main <txt> <tamanho_memoria>
 int main(int argc, char *argv[])
 {
     // receber por args:
@@ -55,7 +50,11 @@ int main(int argc, char *argv[])
     num_processes = 0;
     num_instructions = 0;
 
-    size_t memory_size = 1024; // TODO: MUDAR PARA ESCOLHA DO USUÁRIO
+    srand(time(NULL));
+
+    size_t memory_size = 32; // TODO: MUDAR PARA ESCOLHA DO USUÁRIO
+
+    if ( memory_size > 0 && ((memory_size & (memory_size - 1)) != 0) ) { return 1; } // checa se é >0 e potencia de 2
 
     memory_blocks = malloc(sizeof(uint8_t) * memory_size);
     b_allocated_blocks = malloc(sizeof(uint8_t) * memory_size);
@@ -65,8 +64,8 @@ int main(int argc, char *argv[])
     {
         
         b_allocated_blocks[i] = 0;
-        // memory_blocks[i] = 0;
-        memory_blocks[i] = rand() % rand() % 256; // Trocar pro de cima depois
+        memory_blocks[i] = 0;
+        // memory_blocks[i] = rand() % rand() % 256; // Exemplo de garbage aleatório por toda memória
     }
 
     FILE *p_file;
@@ -111,9 +110,17 @@ int main(int argc, char *argv[])
     printf("%lu, %lu\n", line_count, proc_count);
 
     // Lê arquivo pela terceira vez (talvez mudar isso) e adiciona processos e instrucoes em suas respectivas listas
-    read_file(p_file);    
+    read_file(p_file);
 
     fclose(p_file);
+
+    struct Memory_list *memory_list = memlist_create(memory_size);
+
+    // perguntar politica (circular ou worst fit)
+    //int option;
+    //printf("Qual política de alocação você gostaria de implementar? \n");
+    //printf("(1) Circular Fit \n (2) Worst Fit")
+    // scanf("%d", &option);
 
     if (DEBUG)
     {
@@ -127,29 +134,59 @@ int main(int argc, char *argv[])
             printf("instruction_type: %d, pid: %lu\n", instructions[i].operation, instructions[i].pid);
         }
     }
-    
-    // perguntar politica (circular ou worst fit)
-    //int option;
-    //printf("Qual política de alocação você gostaria de implementar? \n");
-    //printf("(1) Circular Fit \n (2) Worst Fit")
-    // scanf("%d", &option);
 
+    for (size_t i = 0; i < num_instructions; i++)
+    {
+        if (instructions[i].operation == ALLOC)
+        {
+            size_t proc_start_address;
+            size_t proc_size = find_proc_size_by_id(instructions[i].pid);
+            if ( (proc_start_address = memlist_add_circular(memory_list, instructions[i].pid, proc_size)) == -1 )
+            // if ( (proc_start_address = memlist_add_worst(memory_list, instructions[i].pid, proc_size)) == -1 )
+            {
+                printf("ESPAÇO INSUFICIENTE DE MEMÓRIA\n");
+                continue;
+            }
+
+            for (int j = proc_start_address; j <= proc_size; j++)
+            {
+                memory_blocks[i] = rand() % 256;
+                b_allocated_blocks[i] = 1;
+            }
+            char *proc_name = find_proc_by_id(instructions[i].pid);
+            printf("PROCESSO %s DE TAMANHO %lu INSERIDO NO ENDEREÇO %lu\n", proc_name, proc_size, proc_start_address);
+        }
+        else
+        {
+            size_t proc_start_address;
+            size_t proc_size = find_proc_size_by_id(instructions[i].pid);
+            if ( (proc_start_address = memlist_remove_node(memory_list, instructions[i].pid)) == -1 )
+            {
+                printf("PROCESSO NÃO ENCONTRADO\n");
+            }
+
+            for (int j = proc_start_address; j <= proc_size; j++)
+            {
+                b_allocated_blocks[i] = 0;
+            }
+            char *proc_name = find_proc_by_id(instructions[i].pid);
+            printf("PROCESSO %s DE TAMANHO %lu REMOVIDO DO ENDEREÇO %lu\n", proc_name, proc_size, proc_start_address);
+        }
+
+        // if (DEBUG)
+        // {
+        //     print_memory_blocks(b_allocated_blocks, memory_size);
+        //     print_memory_bytes(memory_blocks, memory_size);
+        // }
+
+        printf("\n");
+    }
+        
     print_memory_blocks(b_allocated_blocks, memory_size);
 
     print_memory_bytes(memory_blocks, memory_size);
 
-    // TODO: será modificado pela lista de bytes acima
-    struct Memory_block *block_list;
-
-    initialize_block_list(&block_list, 2048);
-
-    // for (size_t i = 0; i < 2048; i++)
-    // {
-    //     printf("%lu,", block_list[i].occupied);
-    // }    
-    // printf("\n");
-    
-    free(block_list);
+    memlist_clear(memory_list, memory_size);
 
     return 0;
 }
@@ -350,6 +387,24 @@ char *find_proc_by_id(size_t pid)
     return "";
 }
 
+int find_proc_size_by_id(size_t pid)
+{
+    if (num_processes == 0)
+    {
+        return 0;
+    }
+
+    for (size_t i = 0; i < num_processes; i++)
+    {
+        if (pid == processes[i].pid)
+        {
+            return processes[i].size;
+        }
+    }
+
+    return 0;
+}
+
 void print_memory_blocks(BYTE *b_allocated_blocks, size_t memory_size)
 {
     for(size_t i = 0; i < memory_size; i++)
@@ -368,11 +423,12 @@ void print_memory_blocks(BYTE *b_allocated_blocks, size_t memory_size)
             printf("░");
         }
 
-        if (i%64 == 63)
+        if (i%64 == 63 && i != memory_size-1)
         {
             printf("\n");
         }
     }
+    printf("\n");
 }
 
 void print_memory_bytes(BYTE *memory_blocks, size_t memory_size)
@@ -386,11 +442,12 @@ void print_memory_bytes(BYTE *memory_blocks, size_t memory_size)
 
         printf(" %02hhX", memory_blocks[i]);
 
-        if (i%32 == 31)
+        if (i%32 == 31 && i != memory_size-1)
         {
             printf("\n");
         }
     }
+    printf("\n");
 }
 
 // TODO: Possivelmente serão adicionadas na linked list
