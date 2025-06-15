@@ -136,6 +136,12 @@ int main(int argc, char *argv[])
     }
 
     memlist_print(memory_list);
+    if (DEBUG)
+    {
+        print_memory_blocks(b_allocated_blocks, memory_size);
+        print_memory_bytes(memory_blocks, memory_size);
+    }
+    printf("\n");
 
     // Executa instruções
     for (size_t i = 0; i < num_instructions; i++)
