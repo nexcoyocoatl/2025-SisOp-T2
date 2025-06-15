@@ -42,9 +42,6 @@ enum {
 
 // A escolha do tipo de política a ser aplicada (worst ou circular fit) deverá ser realizada em tempo de execução pelo usuário
 
-// se nao houver espaço suficiente para inserir processo:
-// print "ESPAÇO INSUFICIENTE DE MEMORIA"
-
 // ./main <txt> <tamanho_memoria>
 int main(int argc, char *argv[])
 {
@@ -57,7 +54,7 @@ int main(int argc, char *argv[])
 
     srand(time(NULL));
 
-    size_t memory_size = 16;    // TODO: MUDAR PARA ESCOLHA DO USUÁRIO  
+    size_t memory_size = 16;    // TODO: MUDAR PARA ESCOLHA DO USUÁRIO
     uint8_t strategy = WORST;   // TODO: MUDAR PARA ESCOLHA DO USUÁRIO
 
     if ( memory_size > 0 && ((memory_size & (memory_size - 1)) != 0) ) { return 1; } // checa se é >0 e potencia de 2
@@ -226,6 +223,13 @@ int main(int argc, char *argv[])
     // memlist_add_worst(memory_list, 2, 2);
     memlist_clear(memory_list);
     // memlist_dump(memory_list);
+
+    // "Desaloca" toda memória mudando todos booleans para desalocados
+    // Memória física continua com o que tinha nos blocos, que agora é garbage
+    for (size_t i = 0; i < memory_size; i++)
+    {
+        b_allocated_blocks[i] = DISALLOC;
+    }
 
     return 0;
 }

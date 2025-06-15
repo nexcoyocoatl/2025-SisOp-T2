@@ -81,7 +81,7 @@ long long memlist_add_circular(struct Memory_list* lst, size_t pid, size_t proce
     current->b_allocated = ALLOC;
     current->pid = pid;
 
-    last = current->next;
+    last = current->next; // TODO: Mudar
 
     return (long long)current->start_address;
 }
