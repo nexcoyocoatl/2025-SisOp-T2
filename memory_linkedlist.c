@@ -174,6 +174,7 @@ long long memlist_remove_node(struct Memory_list *lst, size_t pid)
         prev_node->size += current->size;
         prev_node->next = current->next;
         free(current);
+        current = NULL;
         current = prev_node;
         lst->size--;
 
@@ -193,6 +194,7 @@ long long memlist_remove_node(struct Memory_list *lst, size_t pid)
         current->size += next_node->size;
         current->next = next_node->next;
         free(next_node);
+        next_node = NULL;
         lst->size--;
     }
 
@@ -222,6 +224,7 @@ int memlist_remove_node_index(struct Memory_list *lst, size_t index)
         }
 
         free(current);
+        current = NULL;
         return 1;
     }
 
@@ -241,6 +244,7 @@ int memlist_remove_node_index(struct Memory_list *lst, size_t index)
             lst->size--;
 
             free(temp);
+            temp = NULL;
 
             if (lst->size == 0)
             {
@@ -336,6 +340,7 @@ void memlist_flush(struct Memory_list *lst, size_t memory_size)
         current = lst->head;
         lst->head = lst->head->next;
         free(current);
+        current = NULL;
         lst->size--;
     }
 
@@ -362,6 +367,7 @@ void memlist_clear(struct Memory_list *lst)
         current = lst->head;
         lst->head = lst->head->next;
         free(current);
+        current = NULL;
         lst->size--;
     }
 }

@@ -20,11 +20,12 @@ struct Tree_node
 struct Memory_tree
 {
     struct Tree_node *head;
-    size_t level;
 };
 
 struct Memory_tree *memtree_create(size_t memory_size);
-int memtree_subdivide(struct Memory_tree *tree, size_t pid);
+int memtree_subdivide(struct Tree_node *node);
+int memtree_remove_children(struct Tree_node *node);
+struct Tree_node *memtree_find_node_by_pid(struct Memory_tree *tree, size_t pid);
 long long memtree_add_buddy(struct Memory_tree *tree, size_t pid, size_t process_size);
 long long memtree_remove_node(struct Memory_tree *tree, size_t pid);
 void memtree_dump(struct Memory_tree *tree);

@@ -51,8 +51,13 @@ int main(int argc, char *argv[])
     // tamanho da memoria (Deverá ser assumido um tamanho sempre equivalente a uma potência de dois.)
     // nome do arquivo a ser aberto
 
+    memory_blocks = NULL;
+    b_allocated_blocks = NULL;
+    instructions = NULL;
+    processes = NULL;
+
     num_processes = 0;
-    num_instructions = 0;
+    num_instructions = 0;    
 
     srand(time(NULL));
 
@@ -73,7 +78,7 @@ int main(int argc, char *argv[])
         // memory_blocks[i] = rand() % rand() % 256; // Exemplo de garbage aleatório por toda memória
     }
 
-    FILE *p_file;
+    FILE *p_file = NULL;
     
     // TODO: por enquanto só recebe nome do arquivo (ex*.txt), depois vai aceitar tamanho de memória e talvez a política
     if (argc == 2)
@@ -112,8 +117,8 @@ int main(int argc, char *argv[])
 
     processes = malloc(sizeof(struct Process) * proc_count);
 
-    struct Memory_list* memory_list;
-    struct Memory_tree* memory_tree;
+    struct Memory_list* memory_list = NULL;
+    struct Memory_tree* memory_tree = NULL;
 
     if (strategy == BUDDY)
     {
@@ -398,9 +403,7 @@ size_t count_processes_from_file(FILE *p_file, size_t line_count)
     size_t char_count = 0;
     char proc_name[STRING_BUFFER];
     char c;
-    char **process_names;
-
-    process_names = malloc(sizeof(char *) * line_count);
+    char **process_names = malloc(sizeof(char *) * line_count);
 
     fseek(p_file, 0, SEEK_SET);
 
@@ -448,8 +451,10 @@ size_t count_processes_from_file(FILE *p_file, size_t line_count)
     for (size_t i = 0; i < proc_count; i++)
     {
         free(process_names[i]);
+        process_names[i] = NULL;
     }
     free(process_names);
+    process_names = NULL;
 
     return proc_count;
 }
