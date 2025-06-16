@@ -57,7 +57,7 @@ int memtree_remove_children(struct Tree_node *node)
 }
 
 // Busca por DFS, da esquerda para a direita
-struct Tree_node *memtree_find_node_by_pid(struct Memory_tree *tree, size_t pid)
+struct Tree_node *memtree_find_node_by_pid(struct Memory_tree *tree, size_t pid, size_t proc_size)
 {
     struct Tree_node *current = NULL;
 
@@ -72,8 +72,12 @@ struct Tree_node *memtree_find_node_by_pid(struct Memory_tree *tree, size_t pid)
         dynarray_get_last(queue, current);
         dynarray_pop(queue);
 
-        if (current->child_right != NULL) { dynarray_push(queue, current->child_right); }
-        if (current->child_left != NULL) { dynarray_push(queue, current->child_left); }
+        // Só entra nos filhos se o processo procurado cabe no tamanho de um deles
+        if (current->size/2 >= proc_size)
+        {
+            if (current->child_right != NULL) { dynarray_push(queue, current->child_right); }
+            if (current->child_left != NULL) { dynarray_push(queue, current->child_left); }
+        }
 
         if (current->b_allocated && current->pid == pid)
         {
