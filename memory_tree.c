@@ -175,20 +175,23 @@ long long memtree_remove_node(struct Memory_tree *tree, size_t pid, size_t proce
     node->b_allocated = DISALLOC;
     node->occupied_size = 0;
 
+    // printf("alloc: %d, leaf: %d, address: %lu, size: %lu, occupied: %lu\n",
+    //             node->b_allocated, node->b_is_leaf, node->start_address, node->size, node->occupied_size);
+
     // NÃO SEI SE ESTÁ FUNCIONANDO DIREITO
     while (node != tree->root)
     {
         node = node->parent;
 
-        if ((node->child_left->b_allocated == 0
-            && node->child_right->b_allocated == 0)
+        if ((node->child_left->b_allocated == DISALLOC
+            && node->child_right->b_allocated == DISALLOC)
             && node->child_left->b_is_leaf
-            && node->child_left->b_is_leaf)
+            && node->child_right->b_is_leaf)
         {
             // REMOVER
-            printf("coalesce alloc: %d, leaf: %d, address: %lu, size: %lu, occupied: %lu\n",
-                node->b_allocated, node->b_is_leaf, node->start_address, node->size, node->occupied_size);
-                
+            // printf("coalesce alloc: %d, leaf: %d, address: %lu, size: %lu, occupied: %lu\n",
+            //     node->b_allocated, node->b_is_leaf, node->start_address, node->size, node->occupied_size);
+
             memtree_coalesce_node(node);
         }
     }
