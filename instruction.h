@@ -6,7 +6,8 @@ enum Operation
 {
     OP_ERROR = -1,
     DISALLOC = 0,
-    ALLOC
+    ALLOC = 1,
+    UNUSED = 2
 };
 
 struct Instruction

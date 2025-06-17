@@ -6,6 +6,10 @@
 #include <stdlib.h>
 #include <string.h>
 
+#ifdef _WIN32
+#include <windows.h>
+#endif
+
 #include "instruction.h"
 #include "memory_linkedlist.h"
 #include "memory_tree.h"
@@ -16,7 +20,7 @@ typedef uint8_t BYTE;
 #define DEBUG 1
 
 BYTE *memory_blocks;        // Memória física
-uint8_t *b_allocated_blocks;   // Indica se o bloco está alocado ou não (também é um uint8_t, pra usar de boolean)
+uint8_t *allocated_blocks;   // Indica se o bloco está alocado ou não (também é um uint8_t, pra usar de boolean)
 
 struct Instruction *instructions;
 struct Process *processes;
@@ -29,7 +33,7 @@ int read_file(FILE *p_file);
 int find_proc_id_by_name(char *name);
 char *find_proc_name_by_id(size_t pid);
 int find_proc_size_by_id(size_t pid);
-void print_memory_blocks(BYTE *b_allocated_blocks, size_t memory_size);
+void print_memory_blocks(BYTE *allocated_blocks, size_t memory_size);
 void print_memory_bytes(BYTE *memory_list, size_t memory_size);
 
 enum {
@@ -47,12 +51,17 @@ enum {
 // ./main <txt> <tamanho_memoria>
 int main(int argc, char *argv[])
 {
+    #ifdef _WIN32
+    SetConsoleCP(437);
+    SetConsoleOutputCP(437);
+    #endif
+
     // receber por args:
     // tamanho da memoria (Deverá ser assumido um tamanho sempre equivalente a uma potência de dois.)
     // nome do arquivo a ser aberto
 
     memory_blocks = NULL;
-    b_allocated_blocks = NULL;
+    allocated_blocks = NULL;
     instructions = NULL;
     processes = NULL;
 
@@ -62,18 +71,18 @@ int main(int argc, char *argv[])
     srand(time(NULL));
 
     size_t memory_size = 16;    // TODO: MUDAR PARA ESCOLHA DO USUÁRIO
-    uint8_t strategy = CIRCULAR;   // TODO: MUDAR PARA ESCOLHA DO USUÁRIO
+    uint8_t strategy = BUDDY;   // TODO: MUDAR PARA ESCOLHA DO USUÁRIO
 
     if ( memory_size > 0 && ((memory_size & (memory_size - 1)) != 0) ) { return 1; } // checa se é >0 e potencia de 2
 
     memory_blocks = malloc(sizeof(uint8_t) * memory_size);
-    b_allocated_blocks = malloc(sizeof(uint8_t) * memory_size);
+    allocated_blocks = malloc(sizeof(uint8_t) * memory_size);
 
     // Zera memória e os booleanos de blocos allocados
     for(size_t i = 0; i < memory_size; i++)
     {
         
-        b_allocated_blocks[i] = DISALLOC;
+        allocated_blocks[i] = DISALLOC;
         memory_blocks[i] = 0;
         // memory_blocks[i] = rand() % rand() % 256; // Exemplo de garbage aleatório por toda memória
     }
@@ -165,7 +174,7 @@ int main(int argc, char *argv[])
 
     if (DEBUG)
     {
-        print_memory_blocks(b_allocated_blocks, memory_size);
+        print_memory_blocks(allocated_blocks, memory_size);
         print_memory_bytes(memory_blocks, memory_size);
     }
     printf("\n");
@@ -203,7 +212,7 @@ int main(int argc, char *argv[])
                 for (int j = proc_start_address; j < proc_start_address + proc_size; j++)
                 {
                     memory_blocks[j] = rand() % 256;
-                    b_allocated_blocks[j] = ALLOC;
+                    allocated_blocks[j] = ALLOC;
                 }
                 printf("PROCESSO %s: TAMANHO %lu, INSERIDO NO ENDEREÇO 0x%07zX (%lu)\n",
                         proc_name, proc_size, proc_start_address, proc_start_address);
@@ -214,7 +223,7 @@ int main(int argc, char *argv[])
             switch (strategy)
             {
             case BUDDY:
-                proc_start_address = (size_t)(memtree_remove_node(memory_tree, instructions[i].pid));
+                proc_start_address = (size_t)(memtree_remove_node(memory_tree, instructions[i].pid, proc_size));
                 break;
             default:
                 proc_start_address = (size_t)(memlist_remove_node(memory_list, instructions[i].pid));
@@ -229,7 +238,7 @@ int main(int argc, char *argv[])
             {
                 for (int j = proc_start_address; j < proc_start_address + proc_size; j++)
                 {
-                    b_allocated_blocks[j] = DISALLOC;
+                    allocated_blocks[j] = DISALLOC;
                 }
                 printf("PROCESSO %s: TAMANHO %lu, REMOVIDO DO ENDEREÇO 0x%07zX (%lu)\n",
                        proc_name, proc_size, proc_start_address, proc_start_address);
@@ -247,7 +256,7 @@ int main(int argc, char *argv[])
 
         if (DEBUG)
         {
-            print_memory_blocks(b_allocated_blocks, memory_size);
+            print_memory_blocks(allocated_blocks, memory_size);
             print_memory_bytes(memory_blocks, memory_size);
         }
 
@@ -294,7 +303,7 @@ int main(int argc, char *argv[])
     // Memória física continua com o que tinha nos blocos, que agora é garbage
     for (size_t i = 0; i < memory_size; i++)
     {
-        b_allocated_blocks[i] = DISALLOC;
+        allocated_blocks[i] = DISALLOC;
     }
 
     return 0;
@@ -515,7 +524,7 @@ int find_proc_size_by_id(size_t pid)
 }
 
 // Imprime blocos de memória
-void print_memory_blocks(BYTE *b_allocated_blocks, size_t memory_size)
+void print_memory_blocks(BYTE *allocated_blocks, size_t memory_size)
 {
     for(size_t i = 0; i < memory_size; i++)
     {
@@ -524,9 +533,13 @@ void print_memory_blocks(BYTE *b_allocated_blocks, size_t memory_size)
             printf("0x%07zX ", i * 256);  // Cada fila de Hex vai de 0x0000 até 0x4000 (0-16383 bits, 64 bytes)
         }
 
-        if (b_allocated_blocks[i] == ALLOC)
+        if (allocated_blocks[i] == ALLOC)
         {
             printf("█");
+        }
+        else if (allocated_blocks[i] == UNUSED)
+        {
+            printf("▓");
         }
         else
         {
