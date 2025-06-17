@@ -21,7 +21,7 @@ typedef uint8_t BYTE;
 #define DEBUG 1
 
 BYTE *memory_blocks;        // Memória física
-uint8_t *allocated_blocks;   // Indica se o bloco está alocado ou não (também é um uint8_t, pra usar de boolean)
+uint8_t *allocated_blocks;  // Indica se o bloco está alocado ou não (também é um uint8_t, pra usar de boolean)
 
 struct Instruction *instructions;
 struct Process *processes;
@@ -43,23 +43,12 @@ enum {
     BUDDY
 };
 
-// ler de um .txt:
-// IN(<nome do processo>,<espaco que ocupa>)
-// OUT(<nome do processo>)
-
-// A escolha do tipo de política a ser aplicada (worst ou circular fit) deverá ser realizada em tempo de execução pelo usuário
-
-// ./main <txt> <tamanho_memoria>
 int main(int argc, char *argv[])
 {
     #ifdef _WIN32
     SetConsoleCP(437);
     SetConsoleOutputCP(437);
     #endif
-
-    // receber por args:
-    // tamanho da memoria (Deverá ser assumido um tamanho sempre equivalente a uma potência de dois.)
-    // nome do arquivo a ser aberto
 
     memory_blocks = NULL;
     allocated_blocks = NULL;
@@ -90,26 +79,78 @@ int main(int argc, char *argv[])
 
     FILE *p_file = NULL;
     
-    // TODO: por enquanto só recebe nome do arquivo (ex*.txt), depois vai aceitar tamanho de memória e talvez a política
-    if (argc == 2)
+
+    for (size_t i = 0; i < argc; i++)
     {
-        p_file = fopen(argv[1], "r");
+        if (strcmp(argv[i],"-i") == 0 && argc > i)
+        {
+            printf("%s\n", argv[i+1]);
+            p_file = fopen(argv[i+1], "r");
+        }
+
+        if (strcmp(argv[i],"-m") == 0 && argc > i)
+        {
+            if ( !(memory_size = (size_t)atoi(argv[i+1])) || memory_size < 0) // ARRUMAR
+            {
+                printf("Invalid memory size.\nExiting program...\n");
+                return 1;
+            }
+            printf("%d\n", memory_size);
+        }
+
+        //ARRUMAR
+        // if (strcmp(argv[i],"-s") == 0 && argc > i)
+        // {
+        //     printf("asdsadsa\n");
+        //     char *s = argv[i+1];
+        //     for (size_t j = 0; s[j] != '\0'; i++)
+        //     {
+        //         printf("asdsadsa\n");
+        //         toupper(s[i]);
+        //     }
+
+        //     printf("a = %s\n", s);
+
+        //     if (s == "C" || s == "CIRCULAR")
+        //         { strategy = CIRCULAR; }
+        //     else if (s == "W" || s == "WORST")
+        //         { strategy = WORST; }
+        //     else if (s == "B" || s == "BUDDY")
+        //         { strategy = CIRCULAR; }
+        //     else
+        //     {
+        //         printf("Strategy not found.\nExiting program...\n");
+        //         return 1;
+        //     }
+        // }
     }
-    else
-    {
-        printf("usage: sisop_t2 <parameter>\n");
-        char input[100] = "";
-        printf("Type the name of the file: ");
-        scanf("%s", input);
-        printf("\n");
-        p_file = fopen(input, "r");
-    }
-    
+
     if (p_file == NULL)
     {
         printf("File not found.\nExiting program...\n");
         return 1;
     }
+    
+    // TODO: por enquanto só recebe nome do arquivo (ex*.txt), depois vai aceitar tamanho de memória e talvez a política
+    // if (argc == 2)
+    // {
+    //     p_file = fopen(argv[1], "r");
+    // }
+    // else
+    // {
+    //     printf("usage: sisop_t2 <parameter>\n");
+    //     char input[100] = "";
+    //     printf("Type the name of the file: ");
+    //     scanf("%s", input);
+    //     printf("\n");
+    //     p_file = fopen(input, "r");
+    // }
+    
+    // if (p_file == NULL)
+    // {
+    //     printf("File not found.\nExiting program...\n");
+    //     return 1;
+    // }
 
     // Conta linhas de instrucoes
     size_t line_count = count_lines_file(p_file);
@@ -143,12 +184,6 @@ int main(int argc, char *argv[])
     read_file(p_file);
 
     fclose(p_file);    
-
-    // perguntar politica (circular ou worst fit)
-    //int option;
-    //printf("Qual política de alocação você gostaria de implementar? \n");
-    //printf("(1) Circular Fit \n (2) Worst Fit")
-    // scanf("%d", &option);
 
     // Mostra a lista de processos e instruções
     if (DEBUG > 2)
