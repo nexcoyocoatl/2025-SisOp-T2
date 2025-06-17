@@ -70,7 +70,7 @@ int main(int argc, char *argv[])
 
     srand(time(NULL));
 
-    size_t memory_size = 16;    // TODO: MUDAR PARA ESCOLHA DO USUÁRIO
+    size_t memory_size = 128;    // TODO: MUDAR PARA ESCOLHA DO USUÁRIO
     uint8_t strategy = BUDDY;   // TODO: MUDAR PARA ESCOLHA DO USUÁRIO
 
     if ( memory_size > 0 && ((memory_size & (memory_size - 1)) != 0) ) { return 1; } // checa se é >0 e potencia de 2
@@ -196,10 +196,10 @@ int main(int argc, char *argv[])
                 proc_start_address = (size_t)(memlist_add_circular(memory_list, instructions[i].pid, proc_size));
                 break;
             case WORST:
-                proc_start_address = (size_t)memlist_add_worst(memory_list, instructions[i].pid, proc_size);
+                proc_start_address = (size_t)(memlist_add_worst(memory_list, instructions[i].pid, proc_size));
                 break;
             case BUDDY:
-                proc_start_address = (size_t)memtree_add_buddy(memory_tree, instructions[i].pid, proc_size);
+                proc_start_address = (size_t)(memtree_add_buddy(memory_tree, instructions[i].pid, proc_size));
                 break;
             }
             

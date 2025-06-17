@@ -51,10 +51,18 @@ int memtree_subdivide(struct Tree_node *node)
     node->child_right->size = new_size;
     node->child_right->occupied_size = 0;
     node->child_right->b_is_leaf = 1;
-    node->child_right->start_address = node->start_address+new_size;
+    node->child_right->start_address = node->start_address + new_size;
     node->child_right->b_allocated = DISALLOC;
     node->child_right->child_left = NULL;
     node->child_right->child_right = NULL;
+
+    // REMOVER
+    // printf("alloc: %d, leaf: %d, address: %lu, size: %lu, occupied: %lu\n",
+    //     node->b_allocated, node->b_is_leaf, node->start_address, node->size, node->occupied_size);
+    // printf("    child left - alloc: %d, leaf: %d, address: %lu, size: %lu, occupied: %lu\n",
+    //     node->child_left->b_allocated, node->child_left->b_is_leaf, node->child_left->start_address, node->child_left->size, node->child_left->occupied_size);
+    // printf("    child right - alloc: %d, leaf: %d, address: %lu, size: %lu, occupied: %lu\n",
+    //     node->child_right->b_allocated, node->child_right->b_is_leaf, node->child_right->start_address, node->child_right->size, node->child_right->occupied_size);
 
     return 1;
 }
@@ -139,8 +147,12 @@ long long memtree_add_buddy(struct Memory_tree *tree, size_t pid, size_t process
             }         
             
             // Se achar um nodo livre de tamanho >= processo e que seus filhos < processo
-            if (!(current->b_allocated) && process_size <= current->size && process_size > current->size/2)
+            if (!(current->b_allocated) && current->b_is_leaf && process_size <= current->size && process_size > current->size/2)
             {
+
+                // REMOVER
+                // printf("alloc: %d, leaf: %d, address: %lu, size: %lu, occupied: \
+                //  %lu\n", current->b_allocated, current->b_is_leaf, current->start_address, current->size, current->occupied_size);
                 dynarray_free(queue);
                 current->pid = pid;
                 current->b_allocated = ALLOC;
@@ -163,6 +175,7 @@ long long memtree_remove_node(struct Memory_tree *tree, size_t pid, size_t proce
     node->b_allocated = DISALLOC;
     node->occupied_size = 0;
 
+    // NÃO SEI SE ESTÁ FUNCIONANDO DIREITO
     while (node != tree->root)
     {
         node = node->parent;
@@ -172,6 +185,10 @@ long long memtree_remove_node(struct Memory_tree *tree, size_t pid, size_t proce
             && node->child_left->b_is_leaf
             && node->child_left->b_is_leaf)
         {
+            // REMOVER
+            printf("coalesce alloc: %d, leaf: %d, address: %lu, size: %lu, occupied: %lu\n",
+                node->b_allocated, node->b_is_leaf, node->start_address, node->size, node->occupied_size);
+                
             memtree_coalesce_node(node);
         }
     }
