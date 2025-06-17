@@ -225,10 +225,11 @@ int main(int argc, char *argv[])
                     {
                         allocated_blocks[j] = UNUSED;
                     }
+                    end_process = end_partition;
                 }
 
-                printf("PROCESSO %s: TAMANHO %lu, INSERIDO NO ENDEREÇO 0x%07zX (%lu)\n",
-                        proc_name, proc_size, proc_start_address, proc_start_address);
+                printf("PROCESSO %s: TAMANHO %lu, INSERIDO NO ENDEREÇO 0x%07zX (%lu) - 0x%07zX (%lu)\n",
+                        proc_name, proc_size, proc_start_address, proc_start_address, end_process-1, end_process-1);
             }
         }
         else    // OUT(proc)
@@ -263,9 +264,10 @@ int main(int argc, char *argv[])
                     {
                         allocated_blocks[j] = DISALLOC;
                     }
+                    end_process = end_partition;
                 }
-                printf("PROCESSO %s: TAMANHO %lu, REMOVIDO DO ENDEREÇO 0x%07zX (%lu)\n",
-                       proc_name, proc_size, proc_start_address, proc_start_address);
+                printf("PROCESSO %s: TAMANHO %lu, REMOVIDO DO ENDEREÇO 0x%07zX (%lu) - 0x%07zX (%lu)\n",
+                       proc_name, proc_size, proc_start_address, proc_start_address, end_process-1, end_process-1);
             }
         }
 

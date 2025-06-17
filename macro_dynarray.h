@@ -1,8 +1,8 @@
 #ifndef _MACRO_DYNARRAY_H_
 #define _MACRO_DYNARRAY_H_
 
-// based on https://crocidb.com/post/simple-vector-implementation-in-c/
-//    and https://www.youtube.com/watch?v=HvG03MY2H04
+// baseado em https://crocidb.com/post/simple-vector-implementation-in-c/
+//    e https://www.youtube.com/watch?v=HvG03MY2H04
 
 #include <stdlib.h>
 
