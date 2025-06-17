@@ -302,6 +302,7 @@ void memlist_dump(struct Memory_list *lst)
     while (current != lst->head);
 }
 
+// Função para imprimir fragmentos de memória livre
 void memlist_print(struct Memory_list *lst)
 {
     struct List_node *current = lst->head;

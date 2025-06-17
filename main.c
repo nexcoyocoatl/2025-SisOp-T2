@@ -17,7 +17,7 @@
 typedef uint8_t BYTE;
 
 #define STRING_BUFFER 32
-#define DEBUG 1
+#define DEBUG 2
 
 BYTE *memory_blocks;        // Memória física
 uint8_t *allocated_blocks;   // Indica se o bloco está alocado ou não (também é um uint8_t, pra usar de boolean)

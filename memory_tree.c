@@ -7,6 +7,8 @@
 #include "memory_tree.h"
 #include "macro_dynarray.h"
 
+// Cria nova árvore de espaços de memória
+// com um nodo contendo toda memória que depois será subdivido
 struct Memory_tree *memtree_create(size_t memory_size)
 {
     struct Memory_tree *tree = malloc(sizeof(struct Memory_tree));
@@ -22,11 +24,16 @@ struct Memory_tree *memtree_create(size_t memory_size)
     return tree;
 }
 
+// Função de subdivisão
+// Se um nodo não está sendo utilizado e não tem filhos, poderá ser subdividido
 int memtree_subdivide(struct Tree_node *node)
 {
-    if (!(node->b_is_leaf)) { return 0; }
+    if (!(node->b_is_leaf) || node->b_allocated) { return 0; }
 
+    // Tamanho dos filhos
     size_t new_size = node->size/2;
+
+    // Se a unidade não pode ser subdividida (eg. 1/2), retorna sem sucesso
     if (new_size == 0) { return 0; }
 
     node->child_left = malloc(sizeof(struct Tree_node));
@@ -56,23 +63,15 @@ int memtree_subdivide(struct Tree_node *node)
     node->child_right->child_left = NULL;
     node->child_right->child_right = NULL;
 
-    // REMOVER
-    // printf("alloc: %d, leaf: %d, address: %lu, size: %lu, occupied: %lu\n",
-    //     node->b_allocated, node->b_is_leaf, node->start_address, node->size, node->occupied_size);
-    // printf("    child left - alloc: %d, leaf: %d, address: %lu, size: %lu, occupied: %lu\n",
-    //     node->child_left->b_allocated, node->child_left->b_is_leaf, node->child_left->start_address, node->child_left->size, node->child_left->occupied_size);
-    // printf("    child right - alloc: %d, leaf: %d, address: %lu, size: %lu, occupied: %lu\n",
-    //     node->child_right->b_allocated, node->child_right->b_is_leaf, node->child_right->start_address, node->child_right->size, node->child_right->occupied_size);
-
     return 1;
 }
 
+// Função de coalescer nodos
 int memtree_coalesce_node(struct Tree_node *node)
 {
-    if ( node->b_is_leaf || !(node->child_left->b_is_leaf) || !(node->child_right->b_is_leaf) )
-    {
-        return 0;
-    }
+    // Retorna sem sucesso se pai ou algum dos filhos não é folha ou se estão alocados
+    if ( node->b_is_leaf || !(node->child_left->b_is_leaf) || !(node->child_right->b_is_leaf) 
+    || node->child_left->b_allocated || node->child_right->b_allocated) { return 0; }
 
     free(node->child_left);
     free(node->child_right);
@@ -85,27 +84,26 @@ int memtree_coalesce_node(struct Tree_node *node)
     return 1;
 }
 
-// Busca por DFS, da esquerda para a direita
+// Busca id por DFS, da esquerda para a direita
 struct Tree_node *memtree_find_node_by_pid(struct Memory_tree *tree, size_t pid, size_t proc_size)
 {
     struct Tree_node *current = NULL;
 
     // Funções para criação de uma array dinâmica por macro
-    dynarray(struct Tree_node *) queue;
-    dynarray_init(queue);
+    dynarray(struct Tree_node *) stack;
+    dynarray_init(stack);
 
-    dynarray_push(queue, tree->root);
+    dynarray_push(stack, tree->root);
     
-    while (dynarray_size(queue) > 0)
+    while (dynarray_size(stack) > 0)
     {
-        dynarray_get_last(queue, current);
-        dynarray_pop(queue);
+        dynarray_pop(stack, current);
 
         // Só entra nos filhos se o processo procurado cabe no tamanho de um deles
         if (current->size/2 >= proc_size)
         {
-            if (current->child_right != NULL) { dynarray_push(queue, current->child_right); }
-            if (current->child_left != NULL) { dynarray_push(queue, current->child_left); }
+            if (current->child_right != NULL) { dynarray_push(stack, current->child_right); }
+            if (current->child_left != NULL) { dynarray_push(stack, current->child_left); }
         }
 
         if (current->b_allocated && current->pid == pid)
@@ -114,25 +112,24 @@ struct Tree_node *memtree_find_node_by_pid(struct Memory_tree *tree, size_t pid,
         }
     }
 
-    dynarray_free(queue);
+    dynarray_free(stack);
 
-    return current;
+    return NULL;
 }
 
+// Insere por DFS
 long long memtree_add_buddy(struct Memory_tree *tree, size_t pid, size_t process_size)
 {
     struct Tree_node *current = NULL;
-    struct Tree_node *best = NULL;
 
-    dynarray(struct Tree_node *) queue;
-    dynarray_init(queue);
+    dynarray(struct Tree_node *) stack;
+    dynarray_init(stack);
 
-    dynarray_push(queue, tree->root);
+    dynarray_push(stack, tree->root);
 
-    while (dynarray_size(queue) > 0)
-    {        
-        dynarray_get_last(queue, current);
-        dynarray_pop(queue);
+    while (dynarray_size(stack) > 0)
+    {
+        dynarray_pop(stack, current);
 
         // Só entra no nodo se tem espaço livre
         if ( !(current->b_allocated) )
@@ -142,18 +139,14 @@ long long memtree_add_buddy(struct Memory_tree *tree, size_t pid, size_t process
             {
                 if (current->b_is_leaf) { memtree_subdivide(current); }
 
-                if (current->child_right != NULL) { dynarray_push(queue, current->child_right); }
-                if (current->child_left != NULL) { dynarray_push(queue, current->child_left); }
+                if (current->child_right != NULL) { dynarray_push(stack, current->child_right); }
+                if (current->child_left != NULL) { dynarray_push(stack, current->child_left); }
             }         
             
             // Se achar um nodo livre de tamanho >= processo e que seus filhos < processo
             if (!(current->b_allocated) && current->b_is_leaf && process_size <= current->size && process_size > current->size/2)
             {
-
-                // REMOVER
-                // printf("alloc: %d, leaf: %d, address: %lu, size: %lu, occupied: \
-                //  %lu\n", current->b_allocated, current->b_is_leaf, current->start_address, current->size, current->occupied_size);
-                dynarray_free(queue);
+                dynarray_free(stack);
                 current->pid = pid;
                 current->b_allocated = ALLOC;
                 current->occupied_size = process_size;
@@ -162,75 +155,99 @@ long long memtree_add_buddy(struct Memory_tree *tree, size_t pid, size_t process
         }
     }
 
-    dynarray_free(queue);
+    dynarray_free(stack);
 
     return -1;
 }
 
+// Remove nodo e tenta coalescer a cada passo, subindo dele até o pai
 long long memtree_remove_node(struct Memory_tree *tree, size_t pid, size_t process_size)
 {
     struct Tree_node *node = memtree_find_node_by_pid(tree, pid, process_size);
 
+    if (node == NULL) { return -1; }
+
     size_t address = node->start_address;
+
+    if (node->b_allocated = DISALLOC) { return -1; }
+
     node->b_allocated = DISALLOC;
     node->occupied_size = 0;
 
-    // printf("alloc: %d, leaf: %d, address: %lu, size: %lu, occupied: %lu\n",
-    //             node->b_allocated, node->b_is_leaf, node->start_address, node->size, node->occupied_size);
-
-    // NÃO SEI SE ESTÁ FUNCIONANDO DIREITO
     while (node != tree->root)
     {
         node = node->parent;
 
-        if ((node->child_left->b_allocated == DISALLOC
-            && node->child_right->b_allocated == DISALLOC)
-            && node->child_left->b_is_leaf
-            && node->child_right->b_is_leaf)
-        {
-            // REMOVER
-            // printf("coalesce alloc: %d, leaf: %d, address: %lu, size: %lu, occupied: %lu\n",
-            //     node->b_allocated, node->b_is_leaf, node->start_address, node->size, node->occupied_size);
-
-            memtree_coalesce_node(node);
-        }
+        memtree_coalesce_node(node);
     }
     
     return (long long)address;
 }
 
+// Função de procura BFS para imprimir nodos da árvore
 void memtree_dump(struct Memory_tree *tree)
-{
-
-}
-
-void memtree_print(struct Memory_tree *tree)
-{
-
-}
-
-void memtree_clear(struct Memory_tree *tree)
 {
     struct Tree_node *current = NULL;
 
     dynarray(struct Tree_node *) queue;
     dynarray_init(queue);
 
-    dynarray_push(queue, tree->root);
-    
+    dynarray_enqueue(queue, tree->root);
+
+    size_t temp_size = tree->root->size;
+
     while (dynarray_size(queue) > 0)
     {
-        dynarray_get_last(queue, current);
-        dynarray_pop(queue);
+        dynarray_dequeue(queue, current);
+
+        if (temp_size != current->size)
+        {
+            temp_size = current->size;
+            printf("\n");
+        }
 
         if ( !(current->b_is_leaf) )
         {
-            if (current->child_right != NULL) { dynarray_push(queue, current->child_right); }
-            if (current->child_left != NULL) { dynarray_push(queue, current->child_left); }
+            dynarray_enqueue(queue, current->child_left);
+            dynarray_enqueue(queue, current->child_right);
+        }
+
+        printf("(%lu-%lu: l:%d, a:%d, p:%lu) ", current->start_address, (current->start_address + current->size), current->b_is_leaf, current->b_allocated, current->pid);
+    }
+    printf("\n");
+    
+
+    dynarray_free(queue);
+}
+
+// Função para imprimir fragmentos de memória livre
+void memtree_print(struct Memory_tree *tree)
+{
+    // TODO:
+}
+
+// Limpa todos nodos por DFS
+void memtree_clear(struct Memory_tree *tree)
+{
+    struct Tree_node *current = NULL;
+
+    dynarray(struct Tree_node *) stack;
+    dynarray_init(stack);
+
+    dynarray_push(stack, tree->root);
+    
+    while (dynarray_size(stack) > 0)
+    {
+        dynarray_pop(stack, current);
+
+        if ( !(current->b_is_leaf) )
+        {
+            if (current->child_right != NULL) { dynarray_push(stack, current->child_right); }
+            if (current->child_left != NULL) { dynarray_push(stack, current->child_left); }
         }
 
         free(current);
     }
 
-    dynarray_free(queue);
+    dynarray_free(stack);
 }

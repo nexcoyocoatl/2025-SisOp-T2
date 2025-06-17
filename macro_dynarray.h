@@ -20,14 +20,13 @@ struct dynarray_header
 
 // Inicializa array dinâmica
 #define dynarray_init(DA) \
-    do\
     { \
         size_t initial_capacity = 8; \
         struct dynarray_header *header = malloc((sizeof(*header)) + (size_t)(initial_capacity*sizeof(DA))); \
         header->m_capacity = initial_capacity; \
         header->m_size = 0; \
         DA = (void*)(header + 1); \
-    } while(0)
+    }
 
 // Para chegar no header, faz cast da array para o tipo do header e subtrai 1
 #define dynarray_get_header(DA) \
@@ -41,9 +40,23 @@ struct dynarray_header
 #define dynarray_capacity(DA) \
     ((DA)? dynarray_get_header(DA)->m_capacity : 0)
 
+#define dynarray_resize(DA, required_size) \
+    { \
+        struct dynarray_header *header = dynarray_get_header(DA); \
+        header->m_capacity = required_size; \
+        header = (struct dynarray_header*)realloc(header, (sizeof *header) + (size_t)(header->m_capacity * sizeof(DA))); \
+        header->m_capacity = required_size; \
+        DA = (void*)(header + 1); \
+    }
+
+#define dynarray_shift_left(DA) \
+    { \
+        for (size_t i = 0; i < dynarray_size(DA) - 1; i++) { DA[i] = DA[i+1]; } \
+        dynarray_get_header(DA)->m_size--; \
+    }
+
 // Põe um novo elemento no final da lista, mudando capacidade com realloc se necessário
 #define dynarray_push(DA, E) \
-    do \
     { \
         if ( (dynarray_get_header(DA)->m_size << 1) > dynarray_get_header(DA)->m_capacity)\
             { \
@@ -52,12 +65,11 @@ struct dynarray_header
             } \
         DA[dynarray_size(DA)] = E; \
         dynarray_get_header(DA)->m_size++; \
-    } \
-    while (0)
+    }
 
-// Retira elemento do final da lista
-#define dynarray_pop(DA) \
-    do { \
+// Remove elemento final da lista
+#define dynarray_remove_last(DA) \
+    { \
         if (dynarray_get_header(DA)->m_size) \
         { \
             if ( (dynarray_get_header(DA)->m_size) < ((dynarray_get_header(DA)->m_capacity) >> 1) ) \
@@ -67,31 +79,34 @@ struct dynarray_header
             } \
             dynarray_get_header(DA)->m_size--;\
         } \
-    } \
-    while (0)
+    }
 
-// out recebe elemento no final da lista
-#define dynarray_get_last(DA, out) { out = DA[dynarray_size(DA)-1]; }
+// Retira elemento do final da lista
+#define dynarray_pop(DA, out) \
+    { out = DA[dynarray_size(DA)-1]; dynarray_remove_last(DA); }
 
-#define dynarray_resize(DA, required_size) \
-    do   { \
-        struct dynarray_header *header = dynarray_get_header(DA); \
-        header->m_capacity = required_size; \
-        header = (struct dynarray_header*)realloc(header, (sizeof *header) + (size_t)(header->m_capacity * sizeof(DA))); \
-        header->m_capacity = required_size; \
-        DA = (void*)(header + 1); \
-    } \
-    while(0)
+#define dynarray_enqueue(DA, E) \
+    dynarray_push(DA, E)
+    
+#define dynarray_dequeue(DA, out) \
+    { out = DA[0]; dynarray_shift_left(DA); }
+
+// out recebe elemento inicial da lista
+#define dynarray_get_first(DA, out) \
+    out = DA[0]
+
+// out recebe elemento final da lista
+#define dynarray_get_last(DA, out) \
+    out = DA[dynarray_size(DA)-1]
 
 // Limpa lista
 #define dynarray_free(DA) \
-    do { \
+    { \
         if (DA) { \
             memset(DA, 0, (size_t)dynarray_size(DA) * (sizeof *(DA))); \
             free(dynarray_get_header(DA));\
             (DA) = NULL;\
         } \
-    } \
-    while (0)
+    }
 
 #endif
