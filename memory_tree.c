@@ -223,7 +223,55 @@ void memtree_dump(struct Memory_tree *tree)
 // Função para imprimir fragmentos de memória livre
 void memtree_print(struct Memory_tree *tree)
 {
-    // TODO:
+    struct Tree_node *current = NULL;
+    size_t contiguous_free_blocks = 0;
+
+    dynarray(struct Tree_node *) stack;
+    dynarray(struct Tree_node *) print_queue;
+    dynarray_init(stack);
+    dynarray_init(print_queue);
+
+    dynarray_push(stack, tree->root);
+
+    size_t temp_size = tree->root->size;
+
+    // Insere folhas em ordem por DFS
+    while (dynarray_size(stack) > 0)
+    {
+        dynarray_pop(stack, current);
+
+        if ( !(current->b_is_leaf) )
+        {
+            dynarray_push(stack, current->child_right);
+            dynarray_push(stack, current->child_left);
+        }
+        else
+        {
+            dynarray_enqueue(print_queue, current);
+        }
+    }
+
+    // Imprime as folhas
+    printf("|");    
+    while (dynarray_size(print_queue) > 0)
+    {
+        dynarray_dequeue(print_queue, current);
+
+        if (!(current->b_allocated))
+        {
+            contiguous_free_blocks += current->size;
+        }
+        else
+        {
+            if (contiguous_free_blocks > 0)
+                { printf("%lu|", contiguous_free_blocks); }
+
+            contiguous_free_blocks = 0;
+        }        
+    }
+    if (contiguous_free_blocks > 0)
+        { printf("%lu|", contiguous_free_blocks); }
+    printf("\n");
 }
 
 // Limpa todos nodos por DFS

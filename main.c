@@ -5,6 +5,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <math.h>
 
 #ifdef _WIN32
 #include <windows.h>
@@ -17,7 +18,7 @@
 typedef uint8_t BYTE;
 
 #define STRING_BUFFER 32
-#define DEBUG 2
+#define DEBUG 1
 
 BYTE *memory_blocks;        // Memória física
 uint8_t *allocated_blocks;   // Indica se o bloco está alocado ou não (também é um uint8_t, pra usar de boolean)
@@ -209,11 +210,23 @@ int main(int argc, char *argv[])
             }
             else
             {
-                for (int j = proc_start_address; j < proc_start_address + proc_size; j++)
+                size_t end_process = proc_start_address + proc_size;
+                for (size_t j = proc_start_address; j < end_process; j++)
                 {
                     memory_blocks[j] = rand() % 256;
                     allocated_blocks[j] = ALLOC;
                 }
+
+                // Aloca resto da partição como unutilizável (fragmentação interna)
+                if (strategy == BUDDY)
+                {
+                    size_t end_partition = proc_start_address + pow(2, ceil(log2((double)proc_size)));
+                    for (size_t j = end_process; j < end_partition; j++)
+                    {
+                        allocated_blocks[j] = UNUSED;
+                    }
+                }
+
                 printf("PROCESSO %s: TAMANHO %lu, INSERIDO NO ENDEREÇO 0x%07zX (%lu)\n",
                         proc_name, proc_size, proc_start_address, proc_start_address);
             }
@@ -236,9 +249,20 @@ int main(int argc, char *argv[])
             }
             else
             {
-                for (int j = proc_start_address; j < proc_start_address + proc_size; j++)
+                size_t end_process = proc_start_address + proc_size;
+                for (int j = proc_start_address; j < end_process; j++)
                 {
                     allocated_blocks[j] = DISALLOC;
+                }
+
+                // Desaloca resto da partição inutilizada da partição pelo processo
+                if (strategy == BUDDY)
+                {
+                    size_t end_partition = proc_start_address + pow(2, ceil(log2((double)proc_size)));
+                    for (size_t j = end_process; j < end_partition; j++)
+                    {
+                        allocated_blocks[j] = DISALLOC;
+                    }
                 }
                 printf("PROCESSO %s: TAMANHO %lu, REMOVIDO DO ENDEREÇO 0x%07zX (%lu)\n",
                        proc_name, proc_size, proc_start_address, proc_start_address);
@@ -539,7 +563,7 @@ void print_memory_blocks(BYTE *allocated_blocks, size_t memory_size)
         }
         else if (allocated_blocks[i] == UNUSED)
         {
-            printf("▓");
+            printf("▒");
         }
         else
         {

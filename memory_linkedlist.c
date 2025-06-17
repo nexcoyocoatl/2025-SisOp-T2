@@ -319,12 +319,14 @@ void memlist_print(struct Memory_list *lst)
         {
             if (contiguous_free_blocks > 0)
                 { printf("%lu|", contiguous_free_blocks); }
-                contiguous_free_blocks = 0;
+
+            contiguous_free_blocks = 0;
         }
 
         current = current->next;
     }
     while (current != lst->head);
+    
     if (contiguous_free_blocks > 0)
         { printf("%lu|", contiguous_free_blocks); }
     printf("\n");
