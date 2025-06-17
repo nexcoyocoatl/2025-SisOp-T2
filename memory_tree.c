@@ -41,6 +41,7 @@ int memtree_subdivide(struct Tree_node *node)
     node->child_left->size = new_size;
     node->child_left->occupied_size = 0;
     node->child_left->start_address = node->start_address;
+    node->child_left->b_is_leaf = 1;
     node->child_left->b_allocated = DISALLOC;
     node->child_left->child_left = NULL;
     node->child_left->child_right = NULL;
@@ -49,6 +50,7 @@ int memtree_subdivide(struct Tree_node *node)
     node->child_right->b_allocated = 0;
     node->child_right->size = new_size;
     node->child_right->occupied_size = 0;
+    node->child_right->b_is_leaf = 1;
     node->child_right->start_address = node->start_address+new_size;
     node->child_right->b_allocated = DISALLOC;
     node->child_right->child_left = NULL;
@@ -128,13 +130,13 @@ long long memtree_add_buddy(struct Memory_tree *tree, size_t pid, size_t process
         if ( !(current->b_allocated) )
         {
             // Só entra nos filhos se cabe neles
-            if (current->size/2 >= process_size)
+            if ( (current->size)/2 >= process_size)
             {
                 if (current->b_is_leaf) { memtree_subdivide(current); }
 
                 if (current->child_right != NULL) { dynarray_push(queue, current->child_right); }
                 if (current->child_left != NULL) { dynarray_push(queue, current->child_left); }
-            }
+            }         
             
             // Se achar um nodo livre de tamanho >= processo e que seus filhos < processo
             if (!(current->b_allocated) && process_size <= current->size && process_size > current->size/2)
