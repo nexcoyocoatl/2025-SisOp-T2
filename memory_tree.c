@@ -108,6 +108,7 @@ struct Tree_node *memtree_find_node_by_pid(struct Memory_tree *tree, size_t pid,
 
         if (current->b_allocated && current->pid == pid)
         {
+            dynarray_free(stack);
             return current;
         }
     }
@@ -147,6 +148,7 @@ long long memtree_add_buddy(struct Memory_tree *tree, size_t pid, size_t process
             if (!(current->b_allocated) && current->b_is_leaf && process_size <= current->size && process_size > current->size/2)
             {
                 dynarray_free(stack);
+
                 current->pid = pid;
                 current->b_allocated = ALLOC;
                 current->occupied_size = process_size;
@@ -212,10 +214,11 @@ void memtree_dump(struct Memory_tree *tree)
             dynarray_enqueue(queue, current->child_right);
         }
 
-        printf("(%lu-%lu: l:%d, a:%d, p:%lu) ", current->start_address, (current->start_address + current->size), current->b_is_leaf, current->b_allocated, current->pid);
+        printf("(%lu-%lu: l:%d, a:%d, p:%lu) ",
+            current->start_address, (current->start_address + current->size),
+            current->b_is_leaf, current->b_allocated, current->pid);
     }
     printf("\n");
-    
 
     dynarray_free(queue);
 }
@@ -251,6 +254,8 @@ void memtree_print(struct Memory_tree *tree)
         }
     }
 
+    dynarray_free(stack);
+
     // Imprime as folhas
     printf("|");    
     while (dynarray_size(print_queue) > 0)
@@ -272,6 +277,8 @@ void memtree_print(struct Memory_tree *tree)
     if (contiguous_free_blocks > 0)
         { printf("%lu|", contiguous_free_blocks); }
     printf("\n");
+
+    dynarray_free(print_queue);
 }
 
 // Limpa todos nodos por DFS
