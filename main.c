@@ -268,7 +268,7 @@ int main(int argc, char *argv[])
             
             if (proc_start_address == -1)
             {
-                printf("PROCESSO %s: TAMANHO %lu, NÃO ALOCADO. ESPAÇO INSUFICIENTE DE MEMÓRIA\n", proc_name, proc_size);
+                printf("PROCESSO %s: TAMANHO %lu, NÃO ALOCADO. ESPAÇO INSUFICIENTE DE MEMÓRIA.\n", proc_name, proc_size);
             }
             else
             {
@@ -299,7 +299,7 @@ int main(int argc, char *argv[])
                     }
                 }
 
-                printf("PROCESSO %s: TAMANHO %lu, INSERIDO NO ENDEREÇO 0x%07zX (%lu) - 0x%07zX (%lu)\n",
+                printf("PROCESSO %s: TAMANHO %lu, INSERIDO NO ENDEREÇO 0x%07zX (%lu) - 0x%07zX (%lu).\n",
                         proc_name, proc_size, proc_start_address, proc_start_address, end_partition, end_partition);
             }
         }
@@ -317,7 +317,7 @@ int main(int argc, char *argv[])
 
             if (proc_start_address == -1)
             {
-                printf("PROCESSO %s: NÃO ENCONTRADO PARA REMOÇÃO\n", proc_name);
+                printf("PROCESSO %s: TAMANHO %lu, NÃO ENCONTRADO PARA REMOÇÃO.\n", proc_name, proc_size);
             }
             else
             {
@@ -348,7 +348,7 @@ int main(int argc, char *argv[])
                     }
                 }
 
-                printf("PROCESSO %s: TAMANHO %lu, REMOVIDO DO ENDEREÇO 0x%07zX (%lu) - 0x%07zX (%lu)\n",
+                printf("PROCESSO %s: TAMANHO %lu, REMOVIDO DO ENDEREÇO 0x%07zX (%lu) - 0x%07zX (%lu).\n",
                        proc_name, proc_size, proc_start_address, proc_start_address, end_partition, end_partition);
             }
         }
