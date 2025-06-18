@@ -18,7 +18,7 @@
 typedef uint8_t BYTE;
 
 #define STRING_BUFFER 32
-#define DEBUG 2
+#define DEBUG 1
 
 BYTE *memory_blocks;        // Memória física
 uint8_t *allocated_blocks;  // Indica se o bloco está alocado ou não (também é um uint8_t, pra usar de boolean)
@@ -52,12 +52,16 @@ int main(int argc, char *argv[])
 
     num_processes = 0;
     num_instructions = 0;
+    size_t line_count = 0;
+    size_t proc_count = 0;
 
     int int_memory_size = 0;
     size_t memory_size = 0;
     int8_t strategy = -1;
 
     FILE *p_file = NULL;
+    struct Memory_list* memory_list = NULL;
+    struct Memory_tree* memory_tree = NULL;
 
     #ifdef _WIN32
     SetConsoleCP(437);
@@ -170,7 +174,7 @@ int main(int argc, char *argv[])
     allocated_blocks = malloc(sizeof(uint8_t) * memory_size);
 
     // Conta linhas de instruções
-    size_t line_count = count_lines_file(p_file);
+    line_count = count_lines_file(p_file);
 
     if (line_count == 0)
     {
@@ -181,13 +185,11 @@ int main(int argc, char *argv[])
     instructions = malloc(sizeof(struct Instruction) * line_count);
 
     // Conta número de processos individuais
-    size_t proc_count = count_processes_from_file(p_file, line_count);
+    proc_count = count_processes_from_file(p_file, line_count);
 
     processes = malloc(sizeof(struct Process) * proc_count);
 
-    struct Memory_list* memory_list = NULL;
-    struct Memory_tree* memory_tree = NULL;
-
+    // Cria árvore ou lista, dependendo da estratégia escolhida
     if (strategy == BUDDY)
     {
         memory_tree = memtree_create(memory_size);
@@ -197,7 +199,7 @@ int main(int argc, char *argv[])
         memory_list = memlist_create(memory_size);
     }
 
-    // Lê arquivo pela terceira vez (talvez mudar isso) e adiciona processos e instrucoes em suas respectivas listas
+    // Lê arquivo para adicionar processos e instrucoes em suas respectivas arrays
     read_file(p_file);
 
     fclose(p_file);    
@@ -216,6 +218,7 @@ int main(int argc, char *argv[])
         }
     }
 
+    // Imprimem fragmentos de memória livre, antes das instruções
     if (strategy == BUDDY)
     {
         memtree_print(memory_tree);
@@ -225,6 +228,7 @@ int main(int argc, char *argv[])
         memlist_print(memory_list);
     }
 
+    // DEBUG 1 Imprime memória em blocos ou em hex de 1 byte (8 bits)
     if (DEBUG)
     {
         print_memory_blocks(allocated_blocks, memory_size);
@@ -269,19 +273,28 @@ int main(int argc, char *argv[])
                     allocated_blocks[j] = ALLOC;
                 }
 
-                // Aloca resto da partição como unutilizável (fragmentação interna)
+                size_t end_partition = end_process - 1;
+
+                // Aloca resto da partição como inutilizável (fragmentação interna)
                 if (strategy == BUDDY)
                 {
-                    size_t end_partition = proc_start_address + pow(2, ceil(log2((double)proc_size)));
-                    for (size_t j = end_process; j < end_partition; j++)
+                    // Encontra tamanho da partição alocada com operações bitwise
+                    size_t temp = proc_size;
+                    size_t partition_size = 1;
+                    temp = (temp <<= 1) - 1;
+                    while (temp >>= 1) { partition_size <<= 1; }
+
+                    // Encontra endereço final da partição
+                    end_partition = proc_start_address + partition_size - 1;
+
+                    for (size_t j = end_process; j <= end_partition; j++)
                     {
                         allocated_blocks[j] = UNUSED;
                     }
-                    end_process = end_partition;
                 }
 
                 printf("PROCESSO %s: TAMANHO %lu, INSERIDO NO ENDEREÇO 0x%07zX (%lu) - 0x%07zX (%lu)\n",
-                        proc_name, proc_size, proc_start_address, proc_start_address, end_process-1, end_process-1);
+                        proc_name, proc_size, proc_start_address, proc_start_address, end_partition, end_partition);
             }
         }
         else    // OUT(proc)
@@ -308,21 +321,33 @@ int main(int argc, char *argv[])
                     allocated_blocks[j] = DISALLOC;
                 }
 
+                size_t end_partition = end_process - 1;
+
                 // Desaloca resto da partição inutilizada da partição pelo processo
                 if (strategy == BUDDY)
                 {
-                    size_t end_partition = proc_start_address + pow(2, ceil(log2((double)proc_size)));
-                    for (size_t j = end_process; j < end_partition; j++)
+
+                    // Encontra tamanho da partição alocada com operações bitwise
+                    size_t temp = proc_size;
+                    size_t partition_size = 1;
+                    temp = (temp <<= 1) - 1;
+                    while (temp >>= 1) { partition_size <<= 1; }
+
+                    // Encontra endereço final da partição
+                    end_partition = proc_start_address + partition_size - 1;
+
+                    for (size_t j = end_process; j <= end_partition; j++)
                     {
                         allocated_blocks[j] = DISALLOC;
                     }
-                    end_process = end_partition;
                 }
+
                 printf("PROCESSO %s: TAMANHO %lu, REMOVIDO DO ENDEREÇO 0x%07zX (%lu) - 0x%07zX (%lu)\n",
-                       proc_name, proc_size, proc_start_address, proc_start_address, end_process-1, end_process-1);
+                       proc_name, proc_size, proc_start_address, proc_start_address, end_partition, end_partition);
             }
         }
 
+        // Imprime fragmentos de memória livre
         if (strategy == BUDDY)
         {
             memtree_print(memory_tree);
@@ -332,12 +357,14 @@ int main(int argc, char *argv[])
             memlist_print(memory_list);
         }
 
+        // DEBUG 1 Imprime memória em blocos ou em hex de 1 byte (8 bits)
         if (DEBUG)
         {
             print_memory_blocks(allocated_blocks, memory_size);
             print_memory_bytes(memory_blocks, memory_size);
         }
 
+        // DEBUG 2 Imprime nodos
         if (DEBUG > 1)
         {
             if (strategy == BUDDY)
@@ -360,6 +387,7 @@ int main(int argc, char *argv[])
         allocated_blocks[i] = DISALLOC;
     }
 
+    // Libera toda memória real do programa
     if (strategy == BUDDY)
     {
         memtree_clear(memory_tree);
@@ -370,7 +398,6 @@ int main(int argc, char *argv[])
         memlist_clear(memory_list);
         free(memory_list);
     }
-
     free(allocated_blocks);
     free(memory_blocks);
     free(instructions);
@@ -414,6 +441,7 @@ int read_file(FILE *p_file)
 
             continue;
         }
+        
         // Um tipo de regex do C pra ser usado com OUT(nome)
         else if (sscanf(s, "%*[^'(']%*c%[^')']%*[^'\0']", proc_name) == 1)
         {
