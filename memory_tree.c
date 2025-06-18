@@ -185,8 +185,8 @@ long long memtree_add_buddy_bfs(struct Memory_tree *tree, size_t pid, size_t pro
             {                
                 if (current->b_is_leaf) { to_subdivide = current; }
 
-                if (current->child_right != NULL) { dynarray_enqueue(queue, current->child_right); }
                 if (current->child_left != NULL) { dynarray_enqueue(queue, current->child_left); }
+                if (current->child_right != NULL) { dynarray_enqueue(queue, current->child_right); }
             }         
             
             // Se achar um nodo livre de tamanho >= processo e que seus filhos < processo
@@ -203,8 +203,8 @@ long long memtree_add_buddy_bfs(struct Memory_tree *tree, size_t pid, size_t pro
             if (dynarray_size(queue) <= 0 && to_subdivide != NULL)
             {
                 memtree_subdivide(to_subdivide);
-                if (current->child_right != NULL) { dynarray_enqueue(queue, current->child_right); }
                 if (current->child_left != NULL) { dynarray_enqueue(queue, current->child_left); }
+                if (current->child_right != NULL) { dynarray_enqueue(queue, current->child_right); }
                 to_subdivide == NULL;
             }
         }
