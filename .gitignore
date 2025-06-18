@@ -53,5 +53,6 @@ Module.symvers
 Mkfile.old
 dkms.conf
 
-# VS Code
+# IDE Config Files
 .vscode/
+.kdev4/
