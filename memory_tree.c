@@ -183,6 +183,7 @@ long long memtree_add_buddy_bfs(struct Memory_tree *tree, size_t pid, size_t pro
             // Só entra nos filhos se cabe neles
             if ( (current->size)/2 >= process_size)
             {                
+                // Se pode ser subdividido, guarda para depois
                 if (current->b_is_leaf) { to_subdivide = current; }
 
                 if (current->child_left != NULL) { dynarray_enqueue(queue, current->child_left); }
@@ -200,6 +201,8 @@ long long memtree_add_buddy_bfs(struct Memory_tree *tree, size_t pid, size_t pro
                 return current->start_address;
             }
 
+            // Se não encontrou espaço ainda e pode subdividir a primeira da "esquerda",
+            // subdivide e adiciona filhos
             if (dynarray_size(queue) <= 0 && to_subdivide != NULL)
             {
                 memtree_subdivide(to_subdivide);
