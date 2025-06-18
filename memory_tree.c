@@ -165,6 +165,7 @@ long long memtree_add_buddy_dfs(struct Memory_tree *tree, size_t pid, size_t pro
 // Insere por BFS, subdividindo apenas se necessário
 long long memtree_add_buddy_bfs(struct Memory_tree *tree, size_t pid, size_t process_size)
 {
+    int i = 0;
     struct Tree_node *current = NULL;
     struct Tree_node *to_subdivide = NULL;
 
@@ -175,24 +176,43 @@ long long memtree_add_buddy_bfs(struct Memory_tree *tree, size_t pid, size_t pro
 
     while (dynarray_size(queue) > 0)
     {
+        i++;
         dynarray_dequeue(queue, current);
+        // if (current == tree->root) {
+        //     printf("\nroot\n");
+        // } else {
+        //     printf("\ni = %d\n", i);
+        // }
+        // printf("size: \n", current->size);
 
         // Só entra no nodo se tem espaço livre
         if ( !(current->b_allocated) )
         {
+            // printf("entrou no nodo, ");
             // Só entra nos filhos se cabe neles
             if ( (current->size)/2 >= process_size)
             {                
+                // printf("entrou no filho, ");
                 // Se pode ser subdividido, guarda para depois
-                if (current->b_is_leaf) { to_subdivide = current; }
+                if (current->b_is_leaf) {
+                    to_subdivide = current;
+                    // printf("setou to_subdivide, ");
+                }
 
-                if (current->child_left != NULL) { dynarray_enqueue(queue, current->child_left); }
-                if (current->child_right != NULL) { dynarray_enqueue(queue, current->child_right); }
+                if (current->child_left != NULL) {
+                    dynarray_enqueue(queue, current->child_left);
+                    // printf("enqueue left, ");
+                }
+                if (current->child_right != NULL) {
+                    dynarray_enqueue(queue, current->child_right);
+                    // printf("enqueue right, ");
+                }
             }         
             
             // Se achar um nodo livre de tamanho >= processo e que seus filhos < processo
             if (!(current->b_allocated) && current->b_is_leaf && process_size <= current->size && process_size > current->size/2)
             {
+                // printf("alocou\n");
                 dynarray_free(queue);
 
                 current->pid = pid;
@@ -203,13 +223,22 @@ long long memtree_add_buddy_bfs(struct Memory_tree *tree, size_t pid, size_t pro
 
             // Se não encontrou espaço ainda e pode subdividir a primeira da "esquerda",
             // subdivide e adiciona filhos
-            if (dynarray_size(queue) <= 0 && to_subdivide != NULL)
+            printf("to_subdivide = %d, queue size = %d, ", to_subdivide == NULL, dynarray_size(queue));
+            if (to_subdivide != NULL)
             {
+                // printf("adicionou filhos, ");
                 memtree_subdivide(to_subdivide);
-                if (current->child_left != NULL) { dynarray_enqueue(queue, current->child_left); }
-                if (current->child_right != NULL) { dynarray_enqueue(queue, current->child_right); }
+                if (current->child_left != NULL) {
+                    dynarray_enqueue(queue, current->child_left);
+                    // printf("fila esq, ");
+                }
+                if (current->child_right != NULL) {
+                    dynarray_enqueue(queue, current->child_right);
+                    // printf("fila dir, ");
+                }
                 to_subdivide == NULL;
             }
+        // printf("\n");
         }
     }
 
