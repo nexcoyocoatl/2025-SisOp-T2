@@ -5,15 +5,13 @@
 //    e https://www.youtube.com/watch?v=HvG03MY2H04
 
 #include <stdlib.h>
+#include <string.h>
 
 struct dynarray_header
 {
     size_t m_capacity;
     size_t m_size;
 };
-
-#include <string.h>
-#include "macro_dynarray.h"
 
 // Criação de uma array dinâmica (ex: dynarray(int a) -> int a*)
 #define dynarray(T) T*
@@ -40,6 +38,7 @@ struct dynarray_header
 #define dynarray_capacity(DA) \
     ((DA)? dynarray_get_header(DA)->m_capacity : 0)
 
+// Aumenta de tamanho com realloc pelo tamanho requerido
 #define dynarray_resize(DA, required_size) \
     { \
         struct dynarray_header *header = dynarray_get_header(DA); \
@@ -49,13 +48,15 @@ struct dynarray_header
         DA = (void*)(header + 1); \
     }
 
+// Troca todos elementos uma vez para a esquerda
 #define dynarray_shift_left(DA) \
     { \
         for (size_t i = 0; i < dynarray_size(DA) - 1; i++) { DA[i] = DA[i+1]; } \
         dynarray_get_header(DA)->m_size--; \
     }
 
-// Põe um novo elemento no final da lista, mudando capacidade com realloc se necessário
+// Põe um novo elemento no final da lista,
+// mudando capacidade em potências de 2 por bitwise se necessário
 #define dynarray_push(DA, E) \
     { \
         if ( (dynarray_get_header(DA)->m_size << 1) > dynarray_get_header(DA)->m_capacity)\
@@ -68,6 +69,7 @@ struct dynarray_header
     }
 
 // Remove elemento final da lista
+// mudando capacidade em potências de 2 por bitwise se necessário
 #define dynarray_remove_last(DA) \
     { \
         if (dynarray_get_header(DA)->m_size) \
@@ -85,9 +87,11 @@ struct dynarray_header
 #define dynarray_pop(DA, out) \
     { out = DA[dynarray_size(DA)-1]; dynarray_remove_last(DA); }
 
+// Adiciona à fila (mesma coisa que push)
 #define dynarray_enqueue(DA, E) \
     dynarray_push(DA, E)
-    
+
+// Retira primeiro da fila, também fazendo shift para a esquerda
 #define dynarray_dequeue(DA, out) \
     { out = DA[0]; dynarray_shift_left(DA); }
 
@@ -99,7 +103,7 @@ struct dynarray_header
 #define dynarray_get_last(DA, out) \
     out = DA[dynarray_size(DA)-1]
 
-// Limpa lista
+// Limpa lista da memória
 #define dynarray_free(DA) \
     { \
         if (DA) { \
