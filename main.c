@@ -17,7 +17,7 @@
 typedef uint8_t BYTE;
 
 #define STRING_BUFFER 32
-#define DEBUG 1
+#define DEBUG 0
 
 BYTE *memory_blocks;        // Memória física
 uint8_t *allocated_blocks;  // Indica se o bloco está alocado ou não (também é um uint8_t, pra usar de boolean)
@@ -67,6 +67,8 @@ int main(int argc, char *argv[])
     SetConsoleOutputCP(437);
     #endif
 
+    uint8_t dbg = DEBUG;
+
     srand(time(NULL));
 
     // Zera memória e os booleanos de blocos allocados
@@ -107,6 +109,11 @@ int main(int argc, char *argv[])
             {
                 strategy = -1;
             }
+        }
+
+        if (strcmp(argv[i],"-d") == 0 && argc > i+1)
+        {
+            dbg = atoi(argv[i+1]);
         }
     }
 
@@ -204,7 +211,7 @@ int main(int argc, char *argv[])
     fclose(p_file);    
 
     // Mostra a lista de processos e instruções
-    if (DEBUG > 2)
+    if (dbg > 2)
     {
         for (size_t i = 0; i < num_processes; i++)
         {
@@ -227,8 +234,8 @@ int main(int argc, char *argv[])
         memlist_print(memory_list);
     }
 
-    // DEBUG 1 Imprime memória em blocos ou em hex de 1 byte (8 bits)
-    if (DEBUG)
+    // Debug 1 Imprime memória em blocos ou em hex de 1 byte (8 bits)
+    if (dbg)
     {
         print_memory_blocks(allocated_blocks, memory_size);
         print_memory_bytes(memory_blocks, memory_size);
@@ -356,15 +363,15 @@ int main(int argc, char *argv[])
             memlist_print(memory_list);
         }
 
-        // DEBUG 1 Imprime memória em blocos ou em hex de 1 byte (8 bits)
-        if (DEBUG)
+        // Debug 1 Imprime memória em blocos ou em hex de 1 byte (8 bits)
+        if (dbg)
         {
             print_memory_blocks(allocated_blocks, memory_size);
             print_memory_bytes(memory_blocks, memory_size);
         }
 
-        // DEBUG 2 Imprime nodos
-        if (DEBUG > 1)
+        // Debug 2 Imprime nodos
+        if (dbg > 1)
         {
             if (strategy == BUDDY)
             {
