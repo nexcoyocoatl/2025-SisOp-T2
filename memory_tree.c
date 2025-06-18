@@ -198,6 +198,7 @@ void memtree_dump(struct Memory_tree *tree)
 
     size_t temp_size = tree->root->size;
 
+    printf("\n");
     while (dynarray_size(queue) > 0)
     {
         dynarray_dequeue(queue, current);
@@ -214,9 +215,11 @@ void memtree_dump(struct Memory_tree *tree)
             dynarray_enqueue(queue, current->child_right);
         }
 
-        printf("(%lu-%lu: l:%d, a:%d, p:%lu) ",
+        char s[10];
+        snprintf(s, 10, "-%lld", current->pid);
+        printf("(%lu-%lu: %s%s%s) ",
             current->start_address, (current->start_address + current->size),
-            current->b_is_leaf, current->b_allocated, current->pid);
+            current->b_allocated?"P":"H", current->b_allocated?s:"", current->b_is_leaf?", LEAF":"");
     }
     printf("\n");
 

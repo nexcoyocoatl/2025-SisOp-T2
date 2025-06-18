@@ -289,17 +289,20 @@ void memlist_dump(struct Memory_list *lst)
         return;
     }
 
+    printf("\n[HEAD ");
     struct List_node *current = lst->head;
     do
     {
         char s[10];
         snprintf(s, 10, "%lu", current->pid);
-        printf("[\n  allocated:%s%s\n  start address: %lu\n  size: %lu\n]\n",
-            current->b_allocated?"P\n  pid: ":"H", current->b_allocated?s:"", current->start_address, current->size);
+        printf("%lu-%lu: %s%s] -> [",
+            current->start_address, (current->start_address + current->size-1),
+            current->b_allocated?"P-":"H", current->b_allocated?s:"");
 
         current = current->next;
     }
     while (current != lst->head);
+    printf("HEAD]\n");
 }
 
 // Função para imprimir fragmentos de memória livre
