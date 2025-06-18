@@ -238,7 +238,7 @@ int main(int argc, char *argv[])
     if (dbg)
     {
         print_memory_blocks(allocated_blocks, memory_size);
-        print_memory_bytes(memory_blocks, memory_size);
+        // print_memory_bytes(memory_blocks, memory_size);
     }
     printf("\n");
 
@@ -368,7 +368,7 @@ int main(int argc, char *argv[])
         if (dbg)
         {
             print_memory_blocks(allocated_blocks, memory_size);
-            print_memory_bytes(memory_blocks, memory_size);
+            // print_memory_bytes(memory_blocks, memory_size);
         }
 
         // Debug 2 Imprime nodos
