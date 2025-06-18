@@ -18,7 +18,7 @@
 typedef uint8_t BYTE;
 
 #define STRING_BUFFER 32
-#define DEBUG 1
+#define DEBUG 2
 
 BYTE *memory_blocks;        // Memória física
 uint8_t *allocated_blocks;  // Indica se o bloco está alocado ou não (também é um uint8_t, pra usar de boolean)
@@ -45,119 +45,136 @@ enum {
 
 int main(int argc, char *argv[])
 {
-    #ifdef _WIN32
-    SetConsoleCP(437);
-    SetConsoleOutputCP(437);
-    #endif
-
     memory_blocks = NULL;
     allocated_blocks = NULL;
     instructions = NULL;
     processes = NULL;
 
     num_processes = 0;
-    num_instructions = 0;    
+    num_instructions = 0;
+
+    int int_memory_size = 0;
+    size_t memory_size = 0;
+    int8_t strategy = -1;
+
+    FILE *p_file = NULL;
+
+    #ifdef _WIN32
+    SetConsoleCP(437);
+    SetConsoleOutputCP(437);
+    #endif
 
     srand(time(NULL));
-
-    size_t memory_size = 128;    // TODO: MUDAR PARA ESCOLHA DO USUÁRIO
-    uint8_t strategy = BUDDY;   // TODO: MUDAR PARA ESCOLHA DO USUÁRIO
-
-    if ( memory_size > 0 && ((memory_size & (memory_size - 1)) != 0) ) { return 1; } // checa se é >0 e potencia de 2
-
-    memory_blocks = malloc(sizeof(uint8_t) * memory_size);
-    allocated_blocks = malloc(sizeof(uint8_t) * memory_size);
 
     // Zera memória e os booleanos de blocos allocados
     for(size_t i = 0; i < memory_size; i++)
     {
-        
         allocated_blocks[i] = DISALLOC;
         memory_blocks[i] = 0;
-        // memory_blocks[i] = rand() % rand() % 256; // Exemplo de garbage aleatório por toda memória
     }
 
-    FILE *p_file = NULL;
-    
-
+    // Lê parâmetros da linha de comando
     for (size_t i = 0; i < argc; i++)
     {
-        if (strcmp(argv[i],"-i") == 0 && argc > i)
+        if (strcmp(argv[i],"-i") == 0 && argc > i+1)
         {
-            printf("%s\n", argv[i+1]);
             p_file = fopen(argv[i+1], "r");
         }
 
-        if (strcmp(argv[i],"-m") == 0 && argc > i)
+        if (strcmp(argv[i],"-m") == 0 && argc > i+1)
         {
-            if ( !(memory_size = (size_t)atoi(argv[i+1])) || memory_size < 0) // ARRUMAR
+            int_memory_size = atoi(argv[i+1]);
+        }
+        
+        if (strcmp(argv[i],"-s") == 0 && argc > i+1)
+        {
+            char *s = argv[i+1];
+            for (size_t j = 0; s[j] != '\0'; j++)
             {
-                printf("Invalid memory size.\nExiting program...\n");
-                return 1;
+                s[j] = toupper(s[j]);
             }
-            printf("%d\n", memory_size);
+
+            if (strcmp(s,"C") == 0 || strcmp(s,"CIRCULAR") == 0)
+                { strategy = CIRCULAR; }
+            else if (strcmp(s,"W") == 0 || strcmp(s,"WORST") == 0)
+                { strategy = WORST; }
+            else if (strcmp(s,"B") == 0 || strcmp(s,"BUDDY") == 0)
+                { strategy = BUDDY; }
+            else
+            {
+                strategy = -1;
+            }
+        }
+    }
+
+    // Caso os parâmetros não tenham sido inseridos
+    // Verifica se arquivo é válido
+    while (p_file == NULL)
+    {
+        char input[100] = "";
+        printf("Arquivo não encontrado\n");
+        printf("Digite o nome do arquivo de instruções: ");
+        scanf("%s", input);
+        printf("\n");
+        p_file = fopen(input, "r");
+    }
+
+    // Verifica se memória é > 0 e potencia de 2
+    while ( int_memory_size <= 0 || ((int_memory_size & (int_memory_size - 1)) != 0) )
+    {
+        char input[100] = "";
+        
+        if (int_memory_size <=0)
+        {
+            printf("Memória não pode ser menor ou igual a 0.\n");
+        }
+        else
+        {
+            printf("Memória não é potência de 2.\n");
+        }
+        printf("Digite o valor do tamanho da memória: ");
+        scanf("%s", input);
+        printf("\n");
+        int_memory_size = atoi(input);
+    }
+    
+    // Verifica se estratégia é válida
+    while (strategy <= -1)
+    {
+        char input[100] = "";
+        printf("Estratégia não encontrada.\n");
+        printf("Digite o nome da estratégia: ");
+        scanf("%s", input);
+        printf("\n");
+
+        char *s = input;
+        for (size_t i = 0; s[i] != '\0'; i++)
+        {
+            s[i] = toupper(s[i]);
         }
 
-        //ARRUMAR
-        // if (strcmp(argv[i],"-s") == 0 && argc > i)
-        // {
-        //     printf("asdsadsa\n");
-        //     char *s = argv[i+1];
-        //     for (size_t j = 0; s[j] != '\0'; i++)
-        //     {
-        //         printf("asdsadsa\n");
-        //         toupper(s[i]);
-        //     }
-
-        //     printf("a = %s\n", s);
-
-        //     if (s == "C" || s == "CIRCULAR")
-        //         { strategy = CIRCULAR; }
-        //     else if (s == "W" || s == "WORST")
-        //         { strategy = WORST; }
-        //     else if (s == "B" || s == "BUDDY")
-        //         { strategy = CIRCULAR; }
-        //     else
-        //     {
-        //         printf("Strategy not found.\nExiting program...\n");
-        //         return 1;
-        //     }
-        // }
+        if (strcmp(s,"C") == 0 || strcmp(s,"CIRCULAR") == 0)
+            { strategy = CIRCULAR; }
+        else if (strcmp(s,"W") == 0 || strcmp(s,"WORST") == 0)
+            { strategy = WORST; }
+        else if (strcmp(s,"B") == 0 || strcmp(s,"BUDDY") == 0)
+            { strategy = BUDDY; }
+        else
+        {
+            strategy == -1;
+        }
     }
 
-    if (p_file == NULL)
-    {
-        printf("File not found.\nExiting program...\n");
-        return 1;
-    }
-    
-    // TODO: por enquanto só recebe nome do arquivo (ex*.txt), depois vai aceitar tamanho de memória e talvez a política
-    // if (argc == 2)
-    // {
-    //     p_file = fopen(argv[1], "r");
-    // }
-    // else
-    // {
-    //     printf("usage: sisop_t2 <parameter>\n");
-    //     char input[100] = "";
-    //     printf("Type the name of the file: ");
-    //     scanf("%s", input);
-    //     printf("\n");
-    //     p_file = fopen(input, "r");
-    // }
-    
-    // if (p_file == NULL)
-    // {
-    //     printf("File not found.\nExiting program...\n");
-    //     return 1;
-    // }
+    memory_size = (size_t)int_memory_size;
+    memory_blocks = malloc(sizeof(uint8_t) * memory_size);
+    allocated_blocks = malloc(sizeof(uint8_t) * memory_size);
 
-    // Conta linhas de instrucoes
+    // Conta linhas de instruções
     size_t line_count = count_lines_file(p_file);
 
     if (line_count == 0)
     {
-        printf("Empty file.\nExiting program...\n");
+        printf("Arquivo vazio.\nEncerrando programa...\n");
         return 1;
     }
 
@@ -336,36 +353,28 @@ int main(int argc, char *argv[])
         printf("\n");
     }
 
-    
-
-    if (strategy == BUDDY)
-    {
-        // Testes pro clear (retirar depois)
-        // memtree_add_buddy(memory_tree, 0, 2);
-        // memtree_add_buddy(memory_tree, 1, 2);
-        // memtree_remove_node(memory_tree, 0);
-        // memtree_add_buddy(memory_tree, 2, 2);
-        memtree_clear(memory_tree);
-        // memtree_dump(memory_tree);
-    }
-    else
-    {
-        // Testes pro clear (retirar depois)
-        // memlist_flush(memory_list, memory_size);
-        // memlist_add_circular(memory_list, 0, 2);
-        // memlist_add_circular(memory_list, 1, 2);
-        // memlist_remove_node(memory_list, 0);
-        // memlist_add_worst(memory_list, 2, 2);
-        memlist_clear(memory_list);
-        // memlist_dump(memory_list);
-    }
-
     // "Desaloca" toda memória mudando todos booleans para desalocados
     // Memória física continua com o que tinha nos blocos, que agora é garbage
     for (size_t i = 0; i < memory_size; i++)
     {
         allocated_blocks[i] = DISALLOC;
     }
+
+    if (strategy == BUDDY)
+    {
+        memtree_clear(memory_tree);
+        free(memory_tree);
+    }
+    else
+    {
+        memlist_clear(memory_list);
+        free(memory_list);
+    }
+
+    free(allocated_blocks);
+    free(memory_blocks);
+    free(instructions);
+    free(processes);
 
     return 0;
 }
@@ -410,7 +419,7 @@ int read_file(FILE *p_file)
         {
             if ((pid = find_proc_id_by_name(proc_name)) == -1)
             {
-                printf("Invalid instruction.\nExiting program...\n");
+                printf("Instrução inválida.\nEncerrando programa...\n");
                 return 0;
             }
 
@@ -421,7 +430,7 @@ int read_file(FILE *p_file)
             continue;
         }
 
-        printf("Invalid instruction.\nExiting program...\n");
+        printf("Instrução inválida.\nEncerrando programa...\n");
         return 0;
     }
 
