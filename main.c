@@ -5,7 +5,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <math.h>
 
 #ifdef _WIN32
 #include <windows.h>
@@ -441,7 +440,7 @@ int read_file(FILE *p_file)
 
             continue;
         }
-        
+
         // Um tipo de regex do C pra ser usado com OUT(nome)
         else if (sscanf(s, "%*[^'(']%*c%[^')']%*[^'\0']", proc_name) == 1)
         {
