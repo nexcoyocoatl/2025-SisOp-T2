@@ -1,0 +1,6 @@
+IN(A,16)
+IN(B,8)
+OUT(A)
+INC(C,8)
+OUT(B)
+OUT(C)

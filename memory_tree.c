@@ -119,7 +119,7 @@ struct Tree_node *memtree_find_node_by_pid(struct Memory_tree *tree, size_t pid,
 }
 
 // Insere por DFS
-long long memtree_add_buddy(struct Memory_tree *tree, size_t pid, size_t process_size)
+long long memtree_add_buddy_dfs(struct Memory_tree *tree, size_t pid, size_t process_size)
 {
     struct Tree_node *current = NULL;
 
@@ -158,6 +158,59 @@ long long memtree_add_buddy(struct Memory_tree *tree, size_t pid, size_t process
     }
 
     dynarray_free(stack);
+
+    return -1;
+}
+
+// Insere por BFS, subdividindo apenas se necessário
+long long memtree_add_buddy_bfs(struct Memory_tree *tree, size_t pid, size_t process_size)
+{
+    struct Tree_node *current = NULL;
+    struct Tree_node *to_subdivide = NULL;
+
+    dynarray(struct Tree_node *) queue;
+    dynarray_init(queue);
+
+    dynarray_enqueue(queue, tree->root);
+
+    while (dynarray_size(queue) > 0)
+    {
+        dynarray_dequeue(queue, current);
+
+        // Só entra no nodo se tem espaço livre
+        if ( !(current->b_allocated) )
+        {
+            // Só entra nos filhos se cabe neles
+            if ( (current->size)/2 >= process_size)
+            {                
+                if (current->b_is_leaf) { to_subdivide = current; }
+
+                if (current->child_right != NULL) { dynarray_enqueue(queue, current->child_right); }
+                if (current->child_left != NULL) { dynarray_enqueue(queue, current->child_left); }
+            }         
+            
+            // Se achar um nodo livre de tamanho >= processo e que seus filhos < processo
+            if (!(current->b_allocated) && current->b_is_leaf && process_size <= current->size && process_size > current->size/2)
+            {
+                dynarray_free(queue);
+
+                current->pid = pid;
+                current->b_allocated = ALLOC;
+                current->occupied_size = process_size;
+                return current->start_address;
+            }
+
+            if (dynarray_size(queue) <= 0 && to_subdivide != NULL)
+            {
+                memtree_subdivide(to_subdivide);
+                if (current->child_right != NULL) { dynarray_enqueue(queue, current->child_right); }
+                if (current->child_left != NULL) { dynarray_enqueue(queue, current->child_left); }
+                to_subdivide == NULL;
+            }
+        }
+    }
+
+    dynarray_free(queue);
 
     return -1;
 }
