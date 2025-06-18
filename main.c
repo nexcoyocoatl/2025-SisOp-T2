@@ -625,9 +625,9 @@ void print_memory_blocks(BYTE *allocated_blocks, size_t memory_size)
 {
     for(size_t i = 0; i < memory_size; i++)
     {
-        if (i%64 == 0) // Cada 64 bytes (cada byte sendo 00-FF, 256 bits)
+        if (i%64 == 0) // Cada 64 bytes (cada byte sendo 00-FF, ou seja, 0-256)
         {
-            printf("0x%07zX ", i * 256);  // Cada fila de Hex vai de 0x0000 até 0x4000 (0-16383 bits, 64 bytes)
+            printf("0x%07zX ", i * 256);  // Cada fila de Hex vai de 0x0000 até 0x4000 (0-16383, 64 bytes)
         }
 
         if (allocated_blocks[i] == ALLOC)
