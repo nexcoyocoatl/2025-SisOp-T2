@@ -644,7 +644,7 @@ void print_memory_blocks(BYTE *allocated_blocks, size_t memory_size)
         }
         else if (allocated_blocks[i] == UNUSED)
         {
-            printf("▒");
+            printf("▓");
         }
         else
         {

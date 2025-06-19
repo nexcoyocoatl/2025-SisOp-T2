@@ -118,7 +118,7 @@ struct Tree_node *memtree_find_node_by_pid(struct Memory_tree *tree, size_t pid,
     return NULL;
 }
 
-// Insere por DFS
+// Insere apenas por DFS
 long long memtree_add_buddy_dfs(struct Memory_tree *tree, size_t pid, size_t process_size)
 {
     struct Tree_node *current = NULL;
@@ -162,57 +162,52 @@ long long memtree_add_buddy_dfs(struct Memory_tree *tree, size_t pid, size_t pro
     return -1;
 }
 
-// Insere por BFS, subdividindo apenas se necessário
+// Procura nodo livre existente por BFS, mas se necessita subdividir, usa DFS
 long long memtree_add_buddy_bfs(struct Memory_tree *tree, size_t pid, size_t process_size)
 {
-    int i = 0;
     struct Tree_node *current = NULL;
-    struct Tree_node *to_subdivide = NULL;
 
-    dynarray(struct Tree_node *) queue;
+    dynarray(struct Tree_node *) queue;                 // Queue para BFS
+    dynarray(struct Tree_node *) subdivide_stack;       // Stack para DFS
     dynarray_init(queue);
+    dynarray_init(subdivide_stack);
 
     dynarray_enqueue(queue, tree->root);
 
-    while (dynarray_size(queue) > 0)
+    // Enquanto as duas arrays não forem esgotadas
+    while (dynarray_size(queue) > 0 || dynarray_size(subdivide_stack) > 0)
     {
-        i++;
-        dynarray_dequeue(queue, current);
-        // if (current == tree->root) {
-        //     printf("\nroot\n");
-        // } else {
-        //     printf("\ni = %d\n", i);
-        // }
-        // printf("size: \n", current->size);
+        // Se ainda tem nodos existentes livres
+        if (dynarray_size(queue) > 0)
+        {
+            dynarray_dequeue(queue, current);
+        }
+        // Se não, começa a retirar do stack
+        else
+        {
+            dynarray_pop(subdivide_stack, current);
+        }        
 
         // Só entra no nodo se tem espaço livre
         if ( !(current->b_allocated) )
         {
-            // printf("entrou no nodo, ");
             // Só entra nos filhos se cabe neles
-            if ( (current->size)/2 >= process_size)
-            {                
-                // printf("entrou no filho, ");
+            if ( (current->size)/2 >= process_size )
+            {
                 // Se pode ser subdividido, guarda para depois
-                if (current->b_is_leaf) {
-                    to_subdivide = current;
-                    // printf("setou to_subdivide, ");
+                if (current->b_is_leaf) { dynarray_push(subdivide_stack, current); }
+                // Se não, tem filhos, então adiciona os dois
+                else
+                {
+                    if (current->child_left != NULL) { dynarray_enqueue(queue, current->child_left); }
+                    if (current->child_right != NULL) { dynarray_enqueue(queue, current->child_right); }
                 }
+            }
 
-                if (current->child_left != NULL) {
-                    dynarray_enqueue(queue, current->child_left);
-                    // printf("enqueue left, ");
-                }
-                if (current->child_right != NULL) {
-                    dynarray_enqueue(queue, current->child_right);
-                    // printf("enqueue right, ");
-                }
-            }         
-            
-            // Se achar um nodo livre de tamanho >= processo e que seus filhos < processo
+            // Se achar um nodo livre de tamanho >= processo e que seus filhos < processo, insere
             if (!(current->b_allocated) && current->b_is_leaf && process_size <= current->size && process_size > current->size/2)
             {
-                // printf("alocou\n");
+                dynarray_free(subdivide_stack);
                 dynarray_free(queue);
 
                 current->pid = pid;
@@ -220,28 +215,46 @@ long long memtree_add_buddy_bfs(struct Memory_tree *tree, size_t pid, size_t pro
                 current->occupied_size = process_size;
                 return current->start_address;
             }
-
-            // Se não encontrou espaço ainda e pode subdividir a primeira da "esquerda",
-            // subdivide e adiciona filhos
-            printf("to_subdivide = %d, queue size = %d, ", to_subdivide == NULL, dynarray_size(queue));
-            if (to_subdivide != NULL)
-            {
-                // printf("adicionou filhos, ");
-                memtree_subdivide(to_subdivide);
-                if (current->child_left != NULL) {
-                    dynarray_enqueue(queue, current->child_left);
-                    // printf("fila esq, ");
-                }
-                if (current->child_right != NULL) {
-                    dynarray_enqueue(queue, current->child_right);
-                    // printf("fila dir, ");
-                }
-                to_subdivide == NULL;
-            }
-        // printf("\n");
         }
-    }
 
+        // Se não encontrou espaço ainda, mas tem nodos que podem ser subdivididos,
+        // subdivide e adiciona filhos ao stack
+        if ( (dynarray_size(queue) == 0) && (dynarray_size(subdivide_stack) > 0) )
+        {
+            dynarray_pop(subdivide_stack, current);
+                
+            memtree_subdivide(current);
+            if (current->child_right != NULL) { dynarray_push(subdivide_stack, current->child_right); }
+            if (current->child_left != NULL) { dynarray_push(subdivide_stack, current->child_left); }
+        }
+
+        // REMOVER
+        // Para debug, insira o pid ou tamanho para mostrar apenas para um processo
+        // if (pid == 0)
+        // {
+        //     printf("queue(%lu): ", dynarray_size(queue));
+        //     for (size_t i = 0; i < dynarray_size(queue); i++)
+        //     {
+        //         char s[10];
+        //         snprintf(s, 10, "-%lld", queue[i]->pid);
+        //         printf("(%lu-%lu: %s%s%s) ",
+        //     queue[i]->start_address, (queue[i]->start_address + queue[i]->size),
+        //     queue[i]->b_allocated?"P":"H", queue[i]->b_allocated?s:"", queue[i]->b_is_leaf?", LEAF":"");
+        //     }
+        //     printf("\nto_subdivide(%lu): ", dynarray_size(subdivide_stack));
+        //     for (size_t i = 0; i < dynarray_size(subdivide_stack); i++)
+        //     {
+        //         char s[10];
+        //         snprintf(s, 10, "-%lld", subdivide_stack[i]->pid);
+        //         printf("(%lu-%lu: %s%s%s) ",
+        //     subdivide_stack[i]->start_address, (subdivide_stack[i]->start_address + subdivide_stack[i]->size),
+        //     subdivide_stack[i]->b_allocated?"P":"H", subdivide_stack[i]->b_allocated?s:"", subdivide_stack[i]->b_is_leaf?", LEAF":"");
+        //     }
+        //     printf("\n\n");
+        // }
+    }    
+
+    dynarray_free(subdivide_stack);
     dynarray_free(queue);
 
     return -1;
