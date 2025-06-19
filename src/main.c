@@ -238,7 +238,9 @@ int main(int argc, char *argv[])
     if (dbg)
     {
         print_memory_blocks(allocated_blocks, memory_size);
-        // print_memory_bytes(memory_blocks, memory_size);
+
+        // Imprime memória alocada em bytes
+        if (dbg == 2) { print_memory_bytes(memory_blocks, memory_size); }
     }
     printf("\n");
 
@@ -368,11 +370,12 @@ int main(int argc, char *argv[])
         if (dbg)
         {
             print_memory_blocks(allocated_blocks, memory_size);
-            // print_memory_bytes(memory_blocks, memory_size);
+
+            if (dbg == 2) { print_memory_bytes(memory_blocks, memory_size); }
         }
 
         // Debug 2 Imprime nodos
-        if (dbg > 1)
+        if (dbg == 3)
         {
             if (strategy == BUDDY)
             {
