@@ -293,8 +293,8 @@ void memlist_dump(struct Memory_list *lst)
     struct List_node *current = lst->head;
     do
     {
-        char s[10];
-        snprintf(s, 10, "%lu", current->pid);
+        char s[21];
+        snprintf(s, 21, "%lu", current->pid);
         printf("%lu-%lu: %s%s] -> [",
             current->start_address, (current->start_address + current->size-1),
             current->b_allocated?"P-":"H", current->b_allocated?s:"");

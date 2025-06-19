@@ -313,11 +313,13 @@ void memtree_dump(struct Memory_tree *tree)
             dynarray_enqueue(queue, current->child_right);
         }
 
-        char s[10];
-        snprintf(s, 10, "-%lld", current->pid);
-        printf("(%lu-%lu: %s%s%s) ",
-            current->start_address, (current->start_address + current->size),
-            current->b_allocated?"P":"H", current->b_allocated?s:"", current->b_is_leaf?", LEAF":"");
+        char s[21];
+        char s2[30];
+        snprintf(s, 21, "-%lld", current->pid);
+        snprintf(s2, 30, "%s%s%s", current->b_allocated?": P":": H", current->b_allocated?s:"", current->b_is_leaf?" LEAF":"");
+        printf("(%lu-%lu%s) ",
+            current->start_address, (current->start_address + current->size-1),
+            current->b_is_leaf?s2:"");
     }
     printf("\n");
 
