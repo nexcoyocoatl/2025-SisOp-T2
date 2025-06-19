@@ -63,8 +63,8 @@ int main(int argc, char *argv[])
     struct Memory_tree* memory_tree = NULL;
 
     #ifdef _WIN32
-    SetConsoleCP(437);
-    SetConsoleOutputCP(437);
+    uint16_t old_page = GetConsoleOutputCP();
+    SetConsoleOutputCP(CP_UTF8);
     #endif
 
     uint8_t dbg = DEBUG;
@@ -409,6 +409,10 @@ int main(int argc, char *argv[])
     free(memory_blocks);
     free(instructions);
     free(processes);
+
+    #ifdef _WIN32
+    SetConsoleOutputCP(old_page);
+    #endif
 
     return 0;
 }
