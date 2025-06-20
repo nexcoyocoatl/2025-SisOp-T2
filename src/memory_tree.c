@@ -306,6 +306,7 @@ void memtree_print(struct Memory_tree *tree)
         }
         else
         {
+            // Caso tenha fragmentação interna, insere na lista correspondente
             if (current->size > current->occupied_size)
             {
                 dynarray_enqueue(internal_frag_print_queue, (current->size - current->occupied_size));
@@ -324,12 +325,14 @@ void memtree_print(struct Memory_tree *tree)
 
     printf("\n");
 
+    // Imprime fragmentação interna
     printf("Frag. Int.: |");
-    if (dynarray_size(internal_frag_print_queue) == 0) { printf("0|"); }
     for (size_t i = 0; i < dynarray_size(internal_frag_print_queue); i++)
     {
         printf("%lu|", internal_frag_print_queue[i]);
     }
+    if (dynarray_size(internal_frag_print_queue) == 0) { printf("0|"); }
+    
     printf("\n");
 
     dynarray_free(external_frag_print_queue);
