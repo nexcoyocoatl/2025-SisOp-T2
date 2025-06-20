@@ -211,7 +211,7 @@ int main(int argc, char *argv[])
     fclose(p_file);    
 
     // Mostra a lista de processos e instruções
-    if (dbg > 2)
+    if (dbg > 3)
     {
         for (size_t i = 0; i < num_processes; i++)
         {
