@@ -71,13 +71,6 @@ int main(int argc, char *argv[])
 
     srand(time(NULL));
 
-    // Zera memória e os booleanos de blocos allocados
-    for(size_t i = 0; i < memory_size; i++)
-    {
-        allocated_blocks[i] = DISALLOC;
-        memory_blocks[i] = 0;
-    }
-
     // Lê parâmetros da linha de comando
     for (size_t i = 0; i < argc; i++)
     {
@@ -178,6 +171,13 @@ int main(int argc, char *argv[])
     memory_size = (size_t)int_memory_size;
     memory_blocks = malloc(sizeof(uint8_t) * memory_size);
     allocated_blocks = malloc(sizeof(uint8_t) * memory_size);
+
+    // Zera memória e os booleanos de blocos allocados
+    for(size_t i = 0; i < memory_size; i++)
+    {
+        allocated_blocks[i] = DISALLOC;
+        memory_blocks[i] = 0;
+    }
 
     // Conta linhas de instruções
     line_count = count_lines_file(p_file);
