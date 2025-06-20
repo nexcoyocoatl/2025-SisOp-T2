@@ -118,52 +118,8 @@ struct Tree_node *memtree_find_node_by_pid(struct Memory_tree *tree, size_t pid,
     return NULL;
 }
 
-// Insere apenas por DFS
-long long memtree_add_buddy_dfs(struct Memory_tree *tree, size_t pid, size_t process_size)
-{
-    struct Tree_node *current = NULL;
-
-    dynarray(struct Tree_node *) stack;
-    dynarray_init(stack);
-
-    dynarray_push(stack, tree->root);
-
-    while (dynarray_size(stack) > 0)
-    {
-        dynarray_pop(stack, current);
-
-        // Só entra no nodo se tem espaço livre
-        if ( !(current->b_allocated) )
-        {
-            // Só entra nos filhos se cabe neles
-            if ( (current->size)/2 >= process_size)
-            {
-                if (current->b_is_leaf) { memtree_subdivide(current); }
-
-                if (current->child_right != NULL) { dynarray_push(stack, current->child_right); }
-                if (current->child_left != NULL) { dynarray_push(stack, current->child_left); }
-            }         
-            
-            // Se achar um nodo livre de tamanho >= processo e que seus filhos < processo
-            if (!(current->b_allocated) && current->b_is_leaf && process_size <= current->size && process_size > current->size/2)
-            {
-                dynarray_free(stack);
-
-                current->pid = pid;
-                current->b_allocated = ALLOC;
-                current->occupied_size = process_size;
-                return current->start_address;
-            }
-        }
-    }
-
-    dynarray_free(stack);
-
-    return -1;
-}
-
 // Procura nodo livre existente por BFS, mas se necessita subdividir, usa DFS
-long long memtree_add_buddy_bfs(struct Memory_tree *tree, size_t pid, size_t process_size)
+long long memtree_add_buddy(struct Memory_tree *tree, size_t pid, size_t process_size)
 {
     struct Tree_node *current = NULL;
 
@@ -227,31 +183,6 @@ long long memtree_add_buddy_bfs(struct Memory_tree *tree, size_t pid, size_t pro
             if (current->child_right != NULL) { dynarray_push(subdivide_stack, current->child_right); }
             if (current->child_left != NULL) { dynarray_push(subdivide_stack, current->child_left); }
         }
-
-        // REMOVER
-        // Para debug, insira o pid ou tamanho para mostrar apenas para um processo
-        // if (pid == 0)
-        // {
-        //     printf("queue(%lu): ", dynarray_size(queue));
-        //     for (size_t i = 0; i < dynarray_size(queue); i++)
-        //     {
-        //         char s[10];
-        //         snprintf(s, 10, "-%lld", queue[i]->pid);
-        //         printf("(%lu-%lu: %s%s%s) ",
-        //     queue[i]->start_address, (queue[i]->start_address + queue[i]->size),
-        //     queue[i]->b_allocated?"P":"H", queue[i]->b_allocated?s:"", queue[i]->b_is_leaf?", LEAF":"");
-        //     }
-        //     printf("\nto_subdivide(%lu): ", dynarray_size(subdivide_stack));
-        //     for (size_t i = 0; i < dynarray_size(subdivide_stack); i++)
-        //     {
-        //         char s[10];
-        //         snprintf(s, 10, "-%lld", subdivide_stack[i]->pid);
-        //         printf("(%lu-%lu: %s%s%s) ",
-        //     subdivide_stack[i]->start_address, (subdivide_stack[i]->start_address + subdivide_stack[i]->size),
-        //     subdivide_stack[i]->b_allocated?"P":"H", subdivide_stack[i]->b_allocated?s:"", subdivide_stack[i]->b_is_leaf?", LEAF":"");
-        //     }
-        //     printf("\n\n");
-        // }
     }    
 
     dynarray_free(subdivide_stack);

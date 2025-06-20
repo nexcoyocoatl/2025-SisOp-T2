@@ -264,8 +264,7 @@ int main(int argc, char *argv[])
                 proc_start_address = (size_t)(memlist_add_worst(memory_list, instructions[i].pid, proc_size));
                 break;
             case BUDDY:
-                // proc_start_address = (size_t)(memtree_add_buddy_dfs(memory_tree, instructions[i].pid, proc_size));
-                proc_start_address = (size_t)(memtree_add_buddy_bfs(memory_tree, instructions[i].pid, proc_size));
+                proc_start_address = (size_t)(memtree_add_buddy(memory_tree, instructions[i].pid, proc_size));
                 break;
             }
             
