@@ -264,9 +264,11 @@ void memtree_print(struct Memory_tree *tree)
     size_t contiguous_free_blocks = 0;
 
     dynarray(struct Tree_node *) stack;
-    dynarray(struct Tree_node *) print_queue;
+    dynarray(struct Tree_node *) external_frag_print_queue;
+    dynarray(size_t) internal_frag_print_queue;
     dynarray_init(stack);
-    dynarray_init(print_queue);
+    dynarray_init(external_frag_print_queue);
+    dynarray_init(internal_frag_print_queue);
 
     dynarray_push(stack, tree->root);
 
@@ -284,24 +286,31 @@ void memtree_print(struct Memory_tree *tree)
         }
         else
         {
-            dynarray_enqueue(print_queue, current);
+            dynarray_enqueue(external_frag_print_queue, current);
         }
     }
 
     dynarray_free(stack);
 
-    // Imprime as folhas
-    printf("|");    
-    while (dynarray_size(print_queue) > 0)
+    // Imprime fragmentação externa
+    printf("Frag. Ext.: |");
+    uint8_t b_free_blocks = 0;
+    while (dynarray_size(external_frag_print_queue) > 0)
     {
-        dynarray_dequeue(print_queue, current);
+        dynarray_dequeue(external_frag_print_queue, current);
 
         if (!(current->b_allocated))
         {
+            b_free_blocks = 1;
             contiguous_free_blocks += current->size;
         }
         else
         {
+            if (current->size > current->occupied_size)
+            {
+                dynarray_enqueue(internal_frag_print_queue, (current->size - current->occupied_size));
+            }
+
             if (contiguous_free_blocks > 0)
                 { printf("%lu|", contiguous_free_blocks); }
 
@@ -310,9 +319,21 @@ void memtree_print(struct Memory_tree *tree)
     }
     if (contiguous_free_blocks > 0)
         { printf("%lu|", contiguous_free_blocks); }
+    
+    if (!b_free_blocks) { printf("0|"); }
+
     printf("\n");
 
-    dynarray_free(print_queue);
+    printf("Frag. Int.: |");
+    if (dynarray_size(internal_frag_print_queue) == 0) { printf("0|"); }
+    for (size_t i = 0; i < dynarray_size(internal_frag_print_queue); i++)
+    {
+        printf("%lu|", internal_frag_print_queue[i]);
+    }
+    printf("\n");
+
+    dynarray_free(external_frag_print_queue);
+    dynarray_free(internal_frag_print_queue);
 }
 
 // Limpa todos nodos por DFS

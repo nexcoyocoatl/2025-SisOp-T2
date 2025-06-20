@@ -311,11 +311,13 @@ void memlist_print(struct Memory_list *lst)
     struct List_node *current = lst->head;
     size_t contiguous_free_blocks = 0;
 
-    printf("|");
+    printf("Frag. Ext.: |");
+    uint8_t b_free_blocks = 0;
     do
     {
         if (!current->b_allocated)
         {
+            b_free_blocks = 1;
             contiguous_free_blocks += current->size;
         }
         else
@@ -332,6 +334,8 @@ void memlist_print(struct Memory_list *lst)
     
     if (contiguous_free_blocks > 0)
         { printf("%lu|", contiguous_free_blocks); }
+    
+    if (!b_free_blocks) { printf("0|"); }
     printf("\n");
 }
 
