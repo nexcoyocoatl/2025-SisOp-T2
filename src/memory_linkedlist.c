@@ -25,6 +25,8 @@ struct Memory_list *memlist_create(size_t memory_size)
     lst->head = node;
     lst->tail = node;
     lst->size = 1;
+
+    last = NULL;
     
     return lst;
 }
@@ -39,7 +41,7 @@ size_t memlist_len(struct Memory_list *lst)
 long long memlist_add_circular(struct Memory_list *lst, size_t pid, size_t process_size)
 {
     uint8_t b_found = 0;
-    struct List_node *current;
+    struct List_node *current = NULL;
     
     // Se ainda não fez search, começa pelo primeiro nodo
     if (last == NULL) { last = lst->head; }
@@ -66,8 +68,10 @@ long long memlist_add_circular(struct Memory_list *lst, size_t pid, size_t proce
     // Se não preencheu exatamente, então divide em dois
     if (process_size < current->size)
     {
-        struct List_node *free_space = malloc(sizeof(struct List_node));
+        struct List_node *free_space = NULL;
+        free_space = malloc(sizeof(struct List_node));
         free_space->b_allocated = DISALLOC;
+        free_space->pid = 0;
         free_space->start_address = current->start_address + process_size;
         free_space->size = current->size - process_size;
         free_space->next = current->next;
@@ -113,7 +117,8 @@ long long memlist_add_worst(struct Memory_list *lst, size_t pid, size_t process_
     // Se não preencheu exatamente, então divide em dois
     if (process_size < worst->size)
     {
-        struct List_node *free_space = malloc(sizeof(struct List_node));
+        struct List_node *free_space = NULL;
+        free_space = malloc(sizeof(struct List_node));
         free_space->b_allocated = DISALLOC;
         free_space->start_address = worst->start_address + process_size;
         free_space->size = worst->size - process_size;
@@ -132,14 +137,12 @@ long long memlist_add_worst(struct Memory_list *lst, size_t pid, size_t process_
     return (long long)(worst->start_address);
 }
 
-// TODO: Adicionar sistema buddy com inserção de nodes
-
 // Remove nodo independente da estratégia
 long long memlist_remove_node(struct Memory_list *lst, size_t pid)
 {
     uint8_t b_found = 0;
     uint8_t b_circular = 0;
-    size_t address;
+    size_t address = 0;
 
     struct List_node *current = lst->head;
     struct List_node *prev_node = current;
@@ -175,8 +178,8 @@ long long memlist_remove_node(struct Memory_list *lst, size_t pid)
         prev_node->size += current->size;
         prev_node->next = current->next;
         free(current);
-        current = NULL;
         current = prev_node;
+        prev_node = NULL;
         lst->size--;
 
         // Caso o last seja perdido com esta junção
@@ -191,97 +194,18 @@ long long memlist_remove_node(struct Memory_list *lst, size_t pid)
     // Se o próximo também é livre, junta
     if (current->next != lst->head && current->next->b_allocated == DISALLOC)
     {
-        struct List_node *next_node = current->next;
+        struct List_node *next_node = NULL;
+        next_node = current->next;
         current->size += next_node->size;
         current->next = next_node->next;
         free(next_node);
-        next_node = NULL;
         lst->size--;
     }
 
     return (long long)address;
 }
 
-// Desnecessário?
-int memlist_remove_node_index(struct Memory_list *lst, size_t index)
-{
-    size_t counter = 0;
-
-    if (lst->size == 0)
-    {
-        return 0;
-    }
-
-    struct List_node *current = lst->head;
-
-    if (index == 0)
-    {
-        lst->head = lst->head->next;
-        lst->size--;
-
-        if (lst->size == 0)
-        {
-            lst->tail = NULL;
-        }
-
-        free(current);
-        current = NULL;
-        return 1;
-    }
-
-    while (current->next != NULL)
-    {
-        counter++;
-        if (counter == index)
-        {
-            struct List_node *temp = current->next;
-
-            if (temp == lst->tail)
-            {
-                lst->tail = current;
-            }
-
-            current->next = current->next->next;
-            lst->size--;
-
-            free(temp);
-            temp = NULL;
-
-            if (lst->size == 0)
-            {
-                lst->tail = NULL;
-            }
-
-            return 2;
-        }
-        current = current->next;
-    }
-
-    return 0;
-}
-
-// Desnecessário?
-struct List_node *memlist_get_node(struct Memory_list *lst, size_t index)
-{
-    if (lst->size == 0) return NULL;
-        
-    struct List_node *current = lst->head;
-    size_t counter = 0;
-
-    while(current != NULL)
-    {
-        if (counter == index)
-        {
-            return current;
-        }
-        counter++;
-        current = current->next;
-    }
-
-    return NULL;
-}
-
-// Imprime todos nodos (talvez melhorar?)
+// Imprime todos nodos
 void memlist_dump(struct Memory_list *lst)
 {
     if (lst->size == 0)
@@ -343,7 +267,7 @@ void memlist_print(struct Memory_list *lst)
 // Limpa toda a linked list, deixando apenas um nodo do tamanho máximo de memória
 void memlist_flush(struct Memory_list *lst, size_t memory_size)
 {
-    struct List_node *current;
+    struct List_node *current = NULL;
 
     // não sei se está deletando todos
     while (lst->size > 0)
@@ -370,7 +294,9 @@ void memlist_flush(struct Memory_list *lst, size_t memory_size)
 // Deleta todos nodos
 void memlist_clear(struct Memory_list *lst)
 {
-    struct List_node *current;
+    struct List_node *current = NULL;
+
+    last = NULL;
 
     // não sei se está deletando todos
     while (lst->size > 0)
