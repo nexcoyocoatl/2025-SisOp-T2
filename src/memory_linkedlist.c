@@ -177,12 +177,19 @@ long long memlist_remove_node(struct Memory_list *lst, size_t pid)
     {
         prev_node->size += current->size;
         prev_node->next = current->next;
+
+        // Verifica se last será perdido
+        if (current == last)
+        {
+            last = NULL;
+        }
+
         free(current);
         current = prev_node;
         prev_node = NULL;
         lst->size--;
 
-        // Caso o last seja perdido com esta junção
+        // Caso o last tenha sido perdido com esta junção
         if (b_circular && last == NULL)
         {
             last = current;
