@@ -482,7 +482,7 @@ int read_file(FILE *p_file)
 size_t count_lines_file(FILE *p_file)
 {
     size_t line_count = 0;
-    size_t char_count;
+    size_t char_count = 0;
     char c;
 
     fseek(p_file, 0, SEEK_SET);

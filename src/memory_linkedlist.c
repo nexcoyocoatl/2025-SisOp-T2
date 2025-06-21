@@ -12,11 +12,12 @@ struct List_node *last; // Para o circular-fit
 // com um nodo contendo toda memória que depois será divido
 struct Memory_list *memlist_create(size_t memory_size)
 {
-    struct Memory_list *lst = malloc(sizeof(struct Memory_list *));
+    struct Memory_list *lst = malloc(sizeof(struct Memory_list));
 
-    struct List_node *node = malloc(sizeof(struct List_node *));
+    struct List_node *node = malloc(sizeof(struct List_node));
 
     node->b_allocated = DISALLOC;
+    node->pid = 0;
     node->start_address = 0;
     node->size = memory_size;
 
@@ -354,7 +355,7 @@ void memlist_flush(struct Memory_list *lst, size_t memory_size)
         lst->size--;
     }
 
-    struct List_node *node = malloc(sizeof(struct List_node *));
+    struct List_node *node = malloc(sizeof(struct List_node));
 
     node->b_allocated = DISALLOC;
     node->start_address = 0;
