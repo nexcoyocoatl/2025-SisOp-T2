@@ -1,6 +1,5 @@
 # Sistemas Operacionais T2 – Gerenciamento de Memória
 
-Caio Adriano Schmidt Ferreira,  Felipe Pitrez Alves de Messias, Juliano Maia
 
 ## Documentação do Programa:
 
