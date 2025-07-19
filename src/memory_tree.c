@@ -246,7 +246,7 @@ void memtree_dump(struct Memory_tree *tree)
 
         char s[21];
         char s2[30];
-        snprintf(s, 21, "-%lld", current->pid);
+        snprintf(s, 21, "-%lld", (long long)current->pid);
         snprintf(s2, 30, "%s%s%s", current->b_allocated?": P":": H", current->b_allocated?s:"", current->b_is_leaf?" LEAF":"");
         printf("(%lu-%lu%s) ",
             current->start_address, (current->start_address + current->size-1),
