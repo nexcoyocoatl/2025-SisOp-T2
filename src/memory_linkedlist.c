@@ -2,6 +2,7 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdbool.h>
 
 #include "instruction.h"
 #include "memory_linkedlist.h"
@@ -16,7 +17,7 @@ struct Memory_list *memlist_create(size_t memory_size)
 
     struct List_node *node = malloc(sizeof(struct List_node));
 
-    node->b_allocated = DISALLOC;
+    node->b_allocated = false;
     node->pid = 0;
     node->start_address = 0;
     node->size = memory_size;
@@ -40,7 +41,7 @@ size_t memlist_len(struct Memory_list *lst)
 // Adiciona nodo por circular-fit
 long long memlist_add_circular(struct Memory_list *lst, size_t pid, size_t process_size)
 {
-    uint8_t b_found = 0;
+    uint8_t b_found = false;
     struct List_node *current = NULL;
     
     // Se ainda não fez search, começa pelo primeiro nodo
@@ -53,7 +54,7 @@ long long memlist_add_circular(struct Memory_list *lst, size_t pid, size_t proce
     {
         if (!(current->b_allocated) && process_size <= current->size)
         {
-            b_found = 1;
+            b_found = true;
             break;
         }
 
@@ -70,7 +71,7 @@ long long memlist_add_circular(struct Memory_list *lst, size_t pid, size_t proce
     {
         struct List_node *free_space = NULL;
         free_space = malloc(sizeof(struct List_node));
-        free_space->b_allocated = DISALLOC;
+        free_space->b_allocated = false;
         free_space->pid = 0;
         free_space->start_address = current->start_address + process_size;
         free_space->size = current->size - process_size;
@@ -83,7 +84,7 @@ long long memlist_add_circular(struct Memory_list *lst, size_t pid, size_t proce
 
         lst->size++;
     }
-    current->b_allocated = ALLOC;
+    current->b_allocated = true;
     current->pid = pid;
 
     last = current;
@@ -119,7 +120,7 @@ long long memlist_add_worst(struct Memory_list *lst, size_t pid, size_t process_
     {
         struct List_node *free_space = NULL;
         free_space = malloc(sizeof(struct List_node));
-        free_space->b_allocated = DISALLOC;
+        free_space->b_allocated = false;
         free_space->start_address = worst->start_address + process_size;
         free_space->size = worst->size - process_size;
         free_space->next = worst->next;
@@ -131,7 +132,7 @@ long long memlist_add_worst(struct Memory_list *lst, size_t pid, size_t process_
 
         lst->size++;
     }
-    worst->b_allocated = ALLOC;
+    worst->b_allocated = true;
     worst->pid = pid;
 
     return (long long)(worst->start_address);
@@ -140,8 +141,8 @@ long long memlist_add_worst(struct Memory_list *lst, size_t pid, size_t process_
 // Remove nodo independente da estratégia
 long long memlist_remove_node(struct Memory_list *lst, size_t pid)
 {
-    uint8_t b_found = 0;
-    uint8_t b_circular = 0;
+    uint8_t b_found = false;
+    uint8_t b_circular = false;
     size_t address = 0;
 
     struct List_node *current = lst->head;
@@ -152,7 +153,7 @@ long long memlist_remove_node(struct Memory_list *lst, size_t pid)
         // Remove apenas se está alocado (pode ser garbage)
         if (current->b_allocated && current->pid == pid)
         {
-            b_found = 1;
+            b_found = true;
             break;
         }
 
@@ -169,11 +170,11 @@ long long memlist_remove_node(struct Memory_list *lst, size_t pid)
 
     if (last != NULL)
     {
-        b_circular = 1;
+        b_circular = true;
     }
 
     // Se o anterior é livre, junta
-    if (prev_node != current && prev_node->b_allocated == DISALLOC)
+    if (prev_node != current && prev_node->b_allocated == false)
     {
         prev_node->size += current->size;
         prev_node->next = current->next;
@@ -196,10 +197,10 @@ long long memlist_remove_node(struct Memory_list *lst, size_t pid)
         }
     }
 
-    current->b_allocated = DISALLOC;
+    current->b_allocated = false;
 
     // Se o próximo também é livre, junta
-    if (current->next != lst->head && current->next->b_allocated == DISALLOC)
+    if (current->next != lst->head && current->next->b_allocated == false)
     {
         struct List_node *next_node = NULL;
         next_node = current->next;
@@ -244,12 +245,12 @@ void memlist_print(struct Memory_list *lst)
     size_t contiguous_free_blocks = 0;
 
     printf("Frag. Ext.: |");
-    uint8_t b_free_blocks = 0;
+    uint8_t b_free_blocks = false;
     do
     {
         if (!current->b_allocated)
         {
-            b_free_blocks = 1;
+            b_free_blocks = true;
             contiguous_free_blocks += current->size;
         }
         else
@@ -287,7 +288,7 @@ void memlist_flush(struct Memory_list *lst, size_t memory_size)
 
     struct List_node *node = malloc(sizeof(struct List_node));
 
-    node->b_allocated = DISALLOC;
+    node->b_allocated = false;
     node->start_address = 0;
     node->size = memory_size;
 

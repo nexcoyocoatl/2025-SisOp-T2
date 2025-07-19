@@ -20,7 +20,7 @@ typedef uint8_t BYTE;
 #define DEBUG 0
 
 BYTE *memory_blocks;        // Memória física
-uint8_t *allocated_blocks;  // Indica se o bloco está alocado ou não (também é um uint8_t, pra usar de boolean)
+uint8_t *allocated_blocks;  // Indica se o bloco está alocado, vazio ou inutilizado
 
 struct Instruction *instructions;
 struct Process *processes;
@@ -164,7 +164,7 @@ int main(int argc, char *argv[])
             { strategy = BUDDY; }
         else
         {
-            strategy == -1;
+            strategy = -1;
         }
     }
 
@@ -289,7 +289,8 @@ int main(int argc, char *argv[])
                     // Encontra tamanho da partição alocada com operações bitwise
                     size_t temp = proc_size;
                     size_t partition_size = 1;
-                    temp = (temp <<= 1) - 1;
+                    temp <<= 1;
+                    temp -= 1;
                     while (temp >>= 1) { partition_size <<= 1; }
 
                     // Encontra endereço final da partição
@@ -338,7 +339,8 @@ int main(int argc, char *argv[])
                     // Encontra tamanho da partição alocada com operações bitwise
                     size_t temp = proc_size;
                     size_t partition_size = 1;
-                    temp = (temp <<= 1) - 1;
+                    temp <<= 1;
+                    temp -= 1;
                     while (temp >>= 1) { partition_size <<= 1; }
 
                     // Encontra endereço final da partição

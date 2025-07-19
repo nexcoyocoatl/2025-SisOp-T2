@@ -2,6 +2,7 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdbool.h>
 
 #include "instruction.h"
 #include "memory_tree.h"
@@ -15,11 +16,11 @@ struct Memory_tree *memtree_create(size_t memory_size)
 
     tree->root = malloc(sizeof(struct Tree_node));
     tree->root->parent = NULL;
-    tree->root->b_allocated = DISALLOC;
+    tree->root->b_allocated = false;
     tree->root->start_address = 0;
     tree->root->size = memory_size;
     tree->root->occupied_size = 0;
-    tree->root->b_is_leaf = 1;
+    tree->root->b_is_leaf = true;
 
     return tree;
 }
@@ -41,25 +42,25 @@ int memtree_subdivide(struct Tree_node *node)
 
     if (node->child_left == NULL || node->child_right == NULL) { return 0; }
 
-    node->b_is_leaf = 0;
+    node->b_is_leaf = false;
     
     node->child_left->parent = node;
-    node->child_left->b_allocated = 0;
+    node->child_left->b_allocated = false;
     node->child_left->size = new_size;
     node->child_left->occupied_size = 0;
     node->child_left->start_address = node->start_address;
-    node->child_left->b_is_leaf = 1;
-    node->child_left->b_allocated = DISALLOC;
+    node->child_left->b_is_leaf = true;
+    node->child_left->b_allocated = false;
     node->child_left->child_left = NULL;
     node->child_left->child_right = NULL;
 
     node->child_right->parent = node;
-    node->child_right->b_allocated = 0;
+    node->child_right->b_allocated = false;
     node->child_right->size = new_size;
     node->child_right->occupied_size = 0;
-    node->child_right->b_is_leaf = 1;
+    node->child_right->b_is_leaf = true;
     node->child_right->start_address = node->start_address + new_size;
-    node->child_right->b_allocated = DISALLOC;
+    node->child_right->b_allocated = false;
     node->child_right->child_left = NULL;
     node->child_right->child_right = NULL;
 
@@ -79,7 +80,7 @@ int memtree_coalesce_node(struct Tree_node *node)
     node->child_left = NULL;
     node->child_right = NULL;
 
-    node->b_is_leaf = 1;
+    node->b_is_leaf = true;
 
     return 1;
 }
@@ -167,7 +168,7 @@ long long memtree_add_buddy(struct Memory_tree *tree, size_t pid, size_t process
                 dynarray_free(queue);
 
                 current->pid = pid;
-                current->b_allocated = ALLOC;
+                current->b_allocated = true;
                 current->occupied_size = process_size;
                 return current->start_address;
             }
@@ -200,9 +201,9 @@ long long memtree_remove_node(struct Memory_tree *tree, size_t pid, size_t proce
 
     size_t address = node->start_address;
 
-    if (node->b_allocated == DISALLOC) { return -1; }
+    if (node->b_allocated == false) { return -1; }
 
-    node->b_allocated = DISALLOC;
+    node->b_allocated = false;
     node->occupied_size = 0;
 
     while (node != tree->root)
@@ -294,14 +295,14 @@ void memtree_print(struct Memory_tree *tree)
 
     // Imprime fragmentação externa
     printf("Frag. Ext.: |");
-    uint8_t b_free_blocks = 0;
+    bool b_free_blocks = false;
     while (dynarray_size(external_frag_print_queue) > 0)
     {
         dynarray_dequeue(external_frag_print_queue, current);
 
         if (!(current->b_allocated))
         {
-            b_free_blocks = 1;
+            b_free_blocks = true;
             contiguous_free_blocks += current->size;
         }
         else
