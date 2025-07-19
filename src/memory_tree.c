@@ -200,7 +200,7 @@ long long memtree_remove_node(struct Memory_tree *tree, size_t pid, size_t proce
 
     size_t address = node->start_address;
 
-    if (node->b_allocated = DISALLOC) { return -1; }
+    if (node->b_allocated == DISALLOC) { return -1; }
 
     node->b_allocated = DISALLOC;
     node->occupied_size = 0;

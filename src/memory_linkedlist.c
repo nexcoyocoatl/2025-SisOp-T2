@@ -276,7 +276,6 @@ void memlist_flush(struct Memory_list *lst, size_t memory_size)
 {
     struct List_node *current = NULL;
 
-    // não sei se está deletando todos
     while (lst->size > 0)
     {
         current = lst->head;
@@ -305,7 +304,6 @@ void memlist_clear(struct Memory_list *lst)
 
     last = NULL;
 
-    // não sei se está deletando todos
     while (lst->size > 0)
     {
         current = lst->head;
