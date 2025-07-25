@@ -37,27 +37,27 @@ Não necessariamente nesta ordem, ainda que os valores devam ser digitados a seg
 
 ### Níveis de debug:  
 Debug 0:  
-![imagedebug0](https://github.com/nexcoyocoatl/2025-SisOp-T2/blob/main/readme/imagedebug0.png)  
+![imagedebug0](readme/imagedebug0.png)  
 Impressão apenas de fragmentos livres de memória contíguos, representando fragmentação externa. No caso da estratégia Buddy também é apresentada a fragmentação interna.
 
 
 Debug 1:  
-![imagedebug1](https://github.com/nexcoyocoatl/2025-SisOp-T2/blob/main/readme/imagedebug1.png)  
+![imagedebug1](readme/imagedebug1.png)  
 Impressão adicional de blocos alocados em branco, e os demais, escuros, de memória livre. Na estratégia Buddy (imagem acima), a fragmentação interna tem uma cor diferente, mais escura, em relação aos blocos alocados pelo processo, visto serem inutilizáveis por outros.
 
 Debug 2:  
-![imagedebug2](https://github.com/nexcoyocoatl/2025-SisOp-T2/blob/main/readme/imagedebug2.png)  
+![imagedebug2](readme/imagedebug2.png)  
 Impressão do debug 1 com a inclusão de uma visualização da abstração da memória física em unidades de bytes (8bits, 2hex) alocados na memória. Ainda que exista esta array em que os bytes são modificados, o efeito é apenas visual, utilizando valores 0-255 aleatórios, visto que os processos também não são reais.
 
 Debug 3:  
-![imagedebug3a](https://github.com/nexcoyocoatl/2025-SisOp-T2/blob/main/readme/imagedebug3a.png)  
+![imagedebug3a](readme/imagedebug3a.png)  
 Impressão do debug nível 1 com adicional dos nodos (por nível, no caso da árvore), indicando seu endereço (eg 0-127). Caso seja uma folha (LEAF), pode ser alocado. H denota que está livre, e P que está alocado por um processo de id após o hífen (eg. P-0).  
 Caso seja uma lista, ficará assim, em apenas uma linha:  
-![imagedebug3b](https://github.com/nexcoyocoatl/2025-SisOp-T2/blob/main/readme/imagedebug3b.png)
+![imagedebug3b](readme/imagedebug3b.png)
 
 
 ### Exemplo de execução:
 Executando ./sisop_t2 -i ex1.txt -m 128 -s worst -d 1, por exemplo, fará o programa utilizar o arquivo de texto ex1.txt no diretório do programa, com uma memória total de 128 unidades, com estratégia Worst-fit e nível de debug 1.  
 Neste exemplo, o programa se comporta desta maneira:  
-![imageruntime](https://github.com/nexcoyocoatl/2025-SisOp-T2/blob/main/readme/imageruntime.png)
+![imageruntime](readme/imageruntime.png)
 
